@@ -1,0 +1,19 @@
+acme_library_homepage:
+    path:     /hello/{name}
+    defaults: { _controller: AcmeLibraryBundle:Default:index }
+
+acme_library_book_new:
+    path:     /book/new
+    defaults: { _controller: AcmeLibraryBundle:Book:new }
+    
+acme_library_book_get:
+    path:     /book/{id}
+    defaults: { _controller: AcmeLibraryBundle:Book:get }
+
+acme_library_author_new:
+    path:     /author/new
+    defaults: { _controller: AcmeLibraryBundle:Author:new }
+
+acme_library_author_get:    
+    path:     /author/{id}
+    defaults: { _controller: AcmeLibraryBundle:Author:get }

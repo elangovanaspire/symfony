@@ -1,0 +1,10 @@
+acme_library:
+    resource: "@AcmeLibraryBundle/Resources/config/routing.yml"
+    prefix:   /
+
+app:
+    resource: "@AppBundle/Controller"
+    type:     annotation
+    
+
+

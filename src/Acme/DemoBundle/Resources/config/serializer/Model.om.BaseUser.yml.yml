@@ -1,0 +1,9 @@
+Acme\DemoBundle\Model\om\BaseUser:
+    exclusion_policy: ALL
+    properties:
+        id:
+            expose: true
+        username:
+            expose: true
+        email:
+            expose: true

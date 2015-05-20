@@ -1,0 +1,8 @@
+
+{% block title "Hello " ~ users %}
+
+{% block content %}
+    <h1>Hello {{ users }}!</h1>
+{% endblock %}
+
+{% set code = code(_self) %}

@@ -1,0 +1,46 @@
+_welcome:
+    path:     /
+    defaults: { _controller: AcmeDemoBundle:Welcome:index }
+
+_demo_secured:
+    resource: "@AcmeDemoBundle/Controller/SecuredController.php"
+    type:     annotation
+
+_demo:
+    resource: "@AcmeDemoBundle/Controller/DemoController.php"
+    type:     annotation
+    prefix:   /demo
+
+acme_demo_user_new:
+    pattern:  /users/
+    defaults: { _controller: AcmeDemoBundle:User:new, _format: ~ }
+    requirements:
+        _method: POST
+        
+acme_demo_user_all:
+    pattern:  /users
+    defaults: { _controller: AcmeDemoBundle:User:all, _format: ~ }
+    requirements:
+        _method: GET
+
+        
+acme_demo_user_get:
+    pattern:  /users/{id}
+    defaults: { _controller: AcmeDemoBundle:User:get, _format: ~ }
+    requirements:
+        _method: GET
+        id: "\d+"
+        
+
+        
+acme_demo_user_edit:
+    pattern:  /users/{id}
+    defaults: { _controller: AcmeDemoBundle:User:edit, _format: ~ }
+    requirements:
+        _method: PUT
+        
+acme_demo_user_delete:
+    pattern:  /users/{id}
+    defaults: { _controller: AcmeDemoBundle:User:remove, _format: ~ }
+    requirements:
+        _method: DELETE
