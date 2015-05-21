@@ -84,7 +84,8 @@ class BookController extends Controller
                     )
                 );
             }
-
+           // return $this->redirect('http://dev.symfony.com/app_dev.php/book/');
+             return $this->generateUrl('/book');
             return $response;
         }
 
@@ -93,6 +94,7 @@ class BookController extends Controller
         return $this->render('AcmeLibraryBundle:Book:new.html.twig', array(
             'form' => $form->createView(),
         ));
+        
     }
     
      public function editAction($id)
@@ -108,6 +110,6 @@ class BookController extends Controller
      public function removeAction(Book $book)
     {
         $book->delete();
-        return $this->render('AcmeLibraryBundle:Book:index.html.twig');
+        return $this->redirect('http://dev.symfony.com/app_dev.php/book/');
     }
 }

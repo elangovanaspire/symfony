@@ -5,36 +5,36 @@ namespace Acme\LibraryBundle\Model\om;
 use \BaseObject;
 use \BasePeer;
 use \Criteria;
+use \DateTime;
 use \Exception;
 use \PDO;
 use \Persistent;
 use \Propel;
 use \PropelCollection;
+use \PropelDateTime;
 use \PropelException;
 use \PropelObjectCollection;
 use \PropelPDO;
-use Acme\LibraryBundle\Model\Author;
-use Acme\LibraryBundle\Model\AuthorQuery;
 use Acme\LibraryBundle\Model\Book;
 use Acme\LibraryBundle\Model\BookClubList;
+use Acme\LibraryBundle\Model\BookClubListPeer;
 use Acme\LibraryBundle\Model\BookClubListQuery;
 use Acme\LibraryBundle\Model\BookListRel;
 use Acme\LibraryBundle\Model\BookListRelQuery;
-use Acme\LibraryBundle\Model\BookPeer;
 use Acme\LibraryBundle\Model\BookQuery;
 
-abstract class BaseBook extends BaseObject implements Persistent
+abstract class BaseBookClubList extends BaseObject implements Persistent
 {
     /**
      * Peer class name
      */
-    const PEER = 'Acme\\LibraryBundle\\Model\\BookPeer';
+    const PEER = 'Acme\\LibraryBundle\\Model\\BookClubListPeer';
 
     /**
      * The Peer class.
      * Instance provides a convenient way of calling static methods on a class
      * that calling code may not be able to identify.
-     * @var        BookPeer
+     * @var        BookClubListPeer
      */
     protected static $peer;
 
@@ -51,27 +51,22 @@ abstract class BaseBook extends BaseObject implements Persistent
     protected $id;
 
     /**
-     * The value for the title field.
+     * The value for the group_leader field.
      * @var        string
      */
-    protected $title;
+    protected $group_leader;
 
     /**
-     * The value for the isbn field.
+     * The value for the theme field.
      * @var        string
      */
-    protected $isbn;
+    protected $theme;
 
     /**
-     * The value for the author_id field.
-     * @var        int
+     * The value for the created_at field.
+     * @var        string
      */
-    protected $author_id;
-
-    /**
-     * @var        Author
-     */
-    protected $aAuthor;
+    protected $created_at;
 
     /**
      * @var        PropelObjectCollection|BookListRel[] Collection to store aggregation of BookListRel objects.
@@ -80,9 +75,9 @@ abstract class BaseBook extends BaseObject implements Persistent
     protected $collBookListRelsPartial;
 
     /**
-     * @var        PropelObjectCollection|BookClubList[] Collection to store aggregation of BookClubList objects.
+     * @var        PropelObjectCollection|Book[] Collection to store aggregation of Book objects.
      */
-    protected $collBookClubLists;
+    protected $collBooks;
 
     /**
      * Flag to prevent endless save loop, if this object is referenced
@@ -108,7 +103,7 @@ abstract class BaseBook extends BaseObject implements Persistent
      * An array of objects scheduled for deletion.
      * @var		PropelObjectCollection
      */
-    protected $bookClubListsScheduledForDeletion = null;
+    protected $booksScheduledForDeletion = null;
 
     /**
      * An array of objects scheduled for deletion.
@@ -118,7 +113,7 @@ abstract class BaseBook extends BaseObject implements Persistent
 
     /**
      * Get the [id] column value.
-     *
+     * Unique ID for a school reading list.
      * @return int
      */
     public function getId()
@@ -128,43 +123,72 @@ abstract class BaseBook extends BaseObject implements Persistent
     }
 
     /**
-     * Get the [title] column value.
-     *
+     * Get the [group_leader] column value.
+     * The name of the teacher in charge of summer reading.
      * @return string
      */
-    public function getTitle()
+    public function getGroupLeader()
     {
 
-        return $this->title;
+        return $this->group_leader;
     }
 
     /**
-     * Get the [isbn] column value.
-     *
+     * Get the [theme] column value.
+     * The theme, if applicable, for the reading list.
      * @return string
      */
-    public function getIsbn()
+    public function getTheme()
     {
 
-        return $this->isbn;
+        return $this->theme;
     }
 
     /**
-     * Get the [author_id] column value.
+     * Get the [optionally formatted] temporal [created_at] column value.
      *
-     * @return int
+     *
+     * @param string $format The date/time format string (either date()-style or strftime()-style).
+     *				 If format is null, then the raw DateTime object will be returned.
+     * @return mixed Formatted date/time value as string or DateTime object (if format is null), null if column is null, and 0 if column value is 0000-00-00 00:00:00
+     * @throws PropelException - if unable to parse/validate the date/time value.
      */
-    public function getAuthorId()
+    public function getCreatedAt($format = null)
     {
+        if ($this->created_at === null) {
+            return null;
+        }
 
-        return $this->author_id;
+        if ($this->created_at === '0000-00-00 00:00:00') {
+            // while technically this is not a default value of null,
+            // this seems to be closest in meaning.
+            return null;
+        }
+
+        try {
+            $dt = new DateTime($this->created_at);
+        } catch (Exception $x) {
+            throw new PropelException("Internally stored date/time/timestamp value could not be converted to DateTime: " . var_export($this->created_at, true), $x);
+        }
+
+        if ($format === null) {
+            // Because propel.useDateTimeClass is true, we return a DateTime object.
+            return $dt;
+        }
+
+        if (strpos($format, '%') !== false) {
+            return strftime($format, $dt->format('U'));
+        }
+
+        return $dt->format($format);
+
     }
 
     /**
      * Set the value of [id] column.
-     *
+     * Unique ID for a school reading list.
      * @param  int $v new value
-     * @return Book The current object (for fluent API support)
+     * @return BookClubList The current object (for fluent API support)
      */
     public function setId($v)
     {
@@ -174,7 +198,7 @@ abstract class BaseBook extends BaseObject implements Persistent
 
         if ($this->id !== $v) {
             $this->id = $v;
-            $this->modifiedColumns[] = BookPeer::ID;
+            $this->modifiedColumns[] = BookClubListPeer::ID;
         }
 
 
@@ -182,71 +206,69 @@ abstract class BaseBook extends BaseObject implements Persistent
     } // setId()
 
     /**
-     * Set the value of [title] column.
-     *
+     * Set the value of [group_leader] column.
+     * The name of the teacher in charge of summer reading.
      * @param  string $v new value
-     * @return Book The current object (for fluent API support)
+     * @return BookClubList The current object (for fluent API support)
      */
-    public function setTitle($v)
+    public function setGroupLeader($v)
     {
         if ($v !== null) {
             $v = (string) $v;
         }
 
-        if ($this->title !== $v) {
-            $this->title = $v;
-            $this->modifiedColumns[] = BookPeer::TITLE;
+        if ($this->group_leader !== $v) {
+            $this->group_leader = $v;
+            $this->modifiedColumns[] = BookClubListPeer::GROUP_LEADER;
         }
 
 
         return $this;
-    } // setTitle()
+    } // setGroupLeader()
 
     /**
-     * Set the value of [isbn] column.
-     *
+     * Set the value of [theme] column.
+     * The theme, if applicable, for the reading list.
      * @param  string $v new value
-     * @return Book The current object (for fluent API support)
+     * @return BookClubList The current object (for fluent API support)
      */
-    public function setIsbn($v)
+    public function setTheme($v)
     {
         if ($v !== null) {
             $v = (string) $v;
         }
 
-        if ($this->isbn !== $v) {
-            $this->isbn = $v;
-            $this->modifiedColumns[] = BookPeer::ISBN;
+        if ($this->theme !== $v) {
+            $this->theme = $v;
+            $this->modifiedColumns[] = BookClubListPeer::THEME;
         }
 
 
         return $this;
-    } // setIsbn()
+    } // setTheme()
 
     /**
-     * Set the value of [author_id] column.
+     * Sets the value of [created_at] column to a normalized version of the date/time value specified.
      *
-     * @param  int $v new value
-     * @return Book The current object (for fluent API support)
+     * @param mixed $v string, integer (timestamp), or DateTime value.
+     *               Empty strings are treated as null.
+     * @return BookClubList The current object (for fluent API support)
      */
-    public function setAuthorId($v)
+    public function setCreatedAt($v)
     {
-        if ($v !== null && is_numeric($v)) {
-            $v = (int) $v;
-        }
-
-        if ($this->author_id !== $v) {
-            $this->author_id = $v;
-            $this->modifiedColumns[] = BookPeer::AUTHOR_ID;
-        }
-
-        if ($this->aAuthor !== null && $this->aAuthor->getId() !== $v) {
-            $this->aAuthor = null;
-        }
+        $dt = PropelDateTime::newInstance($v, null, 'DateTime');
+        if ($this->created_at !== null || $dt !== null) {
+            $currentDateAsString = ($this->created_at !== null && $tmpDt = new DateTime($this->created_at)) ? $tmpDt->format('Y-m-d H:i:s') : null;
+            $newDateAsString = $dt ? $dt->format('Y-m-d H:i:s') : null;
+            if ($currentDateAsString !== $newDateAsString) {
+                $this->created_at = $newDateAsString;
+                $this->modifiedColumns[] = BookClubListPeer::CREATED_AT;
+            }
+        } // if either are not null
 
 
         return $this;
-    } // setAuthorId()
+    } // setCreatedAt()
 
     /**
      * Indicates whether the columns in this object are only set to default values.
@@ -281,9 +303,9 @@ abstract class BaseBook extends BaseObject implements Persistent
         try {
 
             $this->id = ($row[$startcol + 0] !== null) ? (int) $row[$startcol + 0] : null;
-            $this->title = ($row[$startcol + 1] !== null) ? (string) $row[$startcol + 1] : null;
-            $this->isbn = ($row[$startcol + 2] !== null) ? (string) $row[$startcol + 2] : null;
-            $this->author_id = ($row[$startcol + 3] !== null) ? (int) $row[$startcol + 3] : null;
+            $this->group_leader = ($row[$startcol + 1] !== null) ? (string) $row[$startcol + 1] : null;
+            $this->theme = ($row[$startcol + 2] !== null) ? (string) $row[$startcol + 2] : null;
+            $this->created_at = ($row[$startcol + 3] !== null) ? (string) $row[$startcol + 3] : null;
             $this->resetModified();
 
             $this->setNew(false);
@@ -293,10 +315,10 @@ abstract class BaseBook extends BaseObject implements Persistent
             }
             $this->postHydrate($row, $startcol, $rehydrate);
 
-            return $startcol + 4; // 4 = BookPeer::NUM_HYDRATE_COLUMNS.
+            return $startcol + 4; // 4 = BookClubListPeer::NUM_HYDRATE_COLUMNS.
 
         } catch (Exception $e) {
-            throw new PropelException("Error populating Book object", $e);
+            throw new PropelException("Error populating BookClubList object", $e);
         }
     }
 
@@ -316,9 +338,6 @@ abstract class BaseBook extends BaseObject implements Persistent
     public function ensureConsistency()
     {
 
-        if ($this->aAuthor !== null && $this->author_id !== $this->aAuthor->getId()) {
-            $this->aAuthor = null;
-        }
     } // ensureConsistency
 
     /**
@@ -342,13 +361,13 @@ abstract class BaseBook extends BaseObject implements Persistent
         }
 
         if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_READ);
+            $con = Propel::getConnection(BookClubListPeer::DATABASE_NAME, Propel::CONNECTION_READ);
         }
 
         // We don't need to alter the object instance pool; we're just modifying this instance
         // already in the pool.
 
-        $stmt = BookPeer::doSelectStmt($this->buildPkeyCriteria(), $con);
+        $stmt = BookClubListPeer::doSelectStmt($this->buildPkeyCriteria(), $con);
         $row = $stmt->fetch(PDO::FETCH_NUM);
         $stmt->closeCursor();
         if (!$row) {
@@ -358,10 +377,9 @@ abstract class BaseBook extends BaseObject implements Persistent
 
         if ($deep) {  // also de-associate any related objects?
 
-            $this->aAuthor = null;
             $this->collBookListRels = null;
 
-            $this->collBookClubLists = null;
+            $this->collBooks = null;
         } // if (deep)
     }
 
@@ -382,12 +400,12 @@ abstract class BaseBook extends BaseObject implements Persistent
         }
 
         if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
+            $con = Propel::getConnection(BookClubListPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
         }
 
         $con->beginTransaction();
         try {
-            $deleteQuery = BookQuery::create()
+            $deleteQuery = BookClubListQuery::create()
                 ->filterByPrimaryKey($this->getPrimaryKey());
             $ret = $this->preDelete($con);
             if ($ret) {
@@ -425,7 +443,7 @@ abstract class BaseBook extends BaseObject implements Persistent
         }
 
         if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
+            $con = Propel::getConnection(BookClubListPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
         }
 
         $con->beginTransaction();
@@ -445,7 +463,7 @@ abstract class BaseBook extends BaseObject implements Persistent
                     $this->postUpdate($con);
                 }
                 $this->postSave($con);
-                BookPeer::addInstanceToPool($this);
+                BookClubListPeer::addInstanceToPool($this);
             } else {
                 $affectedRows = 0;
             }
@@ -475,18 +493,6 @@ abstract class BaseBook extends BaseObject implements Persistent
         if (!$this->alreadyInSave) {
             $this->alreadyInSave = true;
 
-            // We call the save method on the following object(s) if they
-            // were passed to this object by their corresponding set
-            // method.  This object relates to these object(s) by a
-            // foreign key reference.
-
-            if ($this->aAuthor !== null) {
-                if ($this->aAuthor->isModified() || $this->aAuthor->isNew()) {
-                    $affectedRows += $this->aAuthor->save($con);
-                }
-                $this->setAuthor($this->aAuthor);
-            }
-
             if ($this->isNew() || $this->isModified()) {
                 // persist changes
                 if ($this->isNew()) {
@@ -498,28 +504,28 @@ abstract class BaseBook extends BaseObject implements Persistent
                 $this->resetModified();
             }
 
-            if ($this->bookClubListsScheduledForDeletion !== null) {
-                if (!$this->bookClubListsScheduledForDeletion->isEmpty()) {
+            if ($this->booksScheduledForDeletion !== null) {
+                if (!$this->booksScheduledForDeletion->isEmpty()) {
                     $pks = array();
                     $pk = $this->getPrimaryKey();
-                    foreach ($this->bookClubListsScheduledForDeletion->getPrimaryKeys(false) as $remotePk) {
-                        $pks[] = array($pk, $remotePk);
+                    foreach ($this->booksScheduledForDeletion->getPrimaryKeys(false) as $remotePk) {
+                        $pks[] = array($remotePk, $pk);
                     }
                     BookListRelQuery::create()
                         ->filterByPrimaryKeys($pks)
                         ->delete($con);
-                    $this->bookClubListsScheduledForDeletion = null;
+                    $this->booksScheduledForDeletion = null;
                 }
 
-                foreach ($this->getBookClubLists() as $bookClubList) {
-                    if ($bookClubList->isModified()) {
-                        $bookClubList->save($con);
+                foreach ($this->getBooks() as $book) {
+                    if ($book->isModified()) {
+                        $book->save($con);
                     }
                 }
-            } elseif ($this->collBookClubLists) {
-                foreach ($this->collBookClubLists as $bookClubList) {
-                    if ($bookClubList->isModified()) {
-                        $bookClubList->save($con);
+            } elseif ($this->collBooks) {
+                foreach ($this->collBooks as $book) {
+                    if ($book->isModified()) {
+                        $book->save($con);
                     }
                 }
             }
@@ -561,27 +567,27 @@ abstract class BaseBook extends BaseObject implements Persistent
         $modifiedColumns = array();
         $index = 0;
 
-        $this->modifiedColumns[] = BookPeer::ID;
+        $this->modifiedColumns[] = BookClubListPeer::ID;
         if (null !== $this->id) {
-            throw new PropelException('Cannot insert a value for auto-increment primary key (' . BookPeer::ID . ')');
+            throw new PropelException('Cannot insert a value for auto-increment primary key (' . BookClubListPeer::ID . ')');
         }
 
          // check the columns in natural order for more readable SQL queries
-        if ($this->isColumnModified(BookPeer::ID)) {
+        if ($this->isColumnModified(BookClubListPeer::ID)) {
             $modifiedColumns[':p' . $index++]  = '`id`';
         }
-        if ($this->isColumnModified(BookPeer::TITLE)) {
-            $modifiedColumns[':p' . $index++]  = '`title`';
+        if ($this->isColumnModified(BookClubListPeer::GROUP_LEADER)) {
+            $modifiedColumns[':p' . $index++]  = '`group_leader`';
         }
-        if ($this->isColumnModified(BookPeer::ISBN)) {
-            $modifiedColumns[':p' . $index++]  = '`isbn`';
+        if ($this->isColumnModified(BookClubListPeer::THEME)) {
+            $modifiedColumns[':p' . $index++]  = '`theme`';
         }
-        if ($this->isColumnModified(BookPeer::AUTHOR_ID)) {
-            $modifiedColumns[':p' . $index++]  = '`author_id`';
+        if ($this->isColumnModified(BookClubListPeer::CREATED_AT)) {
+            $modifiedColumns[':p' . $index++]  = '`created_at`';
         }
 
         $sql = sprintf(
-            'INSERT INTO `book` (%s) VALUES (%s)',
+            'INSERT INTO `book_club_list` (%s) VALUES (%s)',
             implode(', ', $modifiedColumns),
             implode(', ', array_keys($modifiedColumns))
         );
@@ -593,14 +599,14 @@ abstract class BaseBook extends BaseObject implements Persistent
                     case '`id`':
                         $stmt->bindValue($identifier, $this->id, PDO::PARAM_INT);
                         break;
-                    case '`title`':
-                        $stmt->bindValue($identifier, $this->title, PDO::PARAM_STR);
+                    case '`group_leader`':
+                        $stmt->bindValue($identifier, $this->group_leader, PDO::PARAM_STR);
                         break;
-                    case '`isbn`':
-                        $stmt->bindValue($identifier, $this->isbn, PDO::PARAM_STR);
+                    case '`theme`':
+                        $stmt->bindValue($identifier, $this->theme, PDO::PARAM_STR);
                         break;
-                    case '`author_id`':
-                        $stmt->bindValue($identifier, $this->author_id, PDO::PARAM_INT);
+                    case '`created_at`':
+                        $stmt->bindValue($identifier, $this->created_at, PDO::PARAM_STR);
                         break;
                 }
             }
@@ -696,19 +702,7 @@ abstract class BaseBook extends BaseObject implements Persistent
             $failureMap = array();
 
 
-            // We call the validate method on the following object(s) if they
-            // were passed to this object by their corresponding set
-            // method.  This object relates to these object(s) by a
-            // foreign key reference.
-
-            if ($this->aAuthor !== null) {
-                if (!$this->aAuthor->validate($columns)) {
-                    $failureMap = array_merge($failureMap, $this->aAuthor->getValidationFailures());
-                }
-            }
-
-
-            if (($retval = BookPeer::doValidate($this, $columns)) !== true) {
+            if (($retval = BookClubListPeer::doValidate($this, $columns)) !== true) {
                 $failureMap = array_merge($failureMap, $retval);
             }
 
@@ -740,7 +734,7 @@ abstract class BaseBook extends BaseObject implements Persistent
      */
     public function getByName($name, $type = BasePeer::TYPE_PHPNAME)
     {
-        $pos = BookPeer::translateFieldName($name, $type, BasePeer::TYPE_NUM);
+        $pos = BookClubListPeer::translateFieldName($name, $type, BasePeer::TYPE_NUM);
         $field = $this->getByPosition($pos);
 
         return $field;
@@ -760,13 +754,13 @@ abstract class BaseBook extends BaseObject implements Persistent
                 return $this->getId();
                 break;
             case 1:
-                return $this->getTitle();
+                return $this->getGroupLeader();
                 break;
             case 2:
-                return $this->getIsbn();
+                return $this->getTheme();
                 break;
             case 3:
-                return $this->getAuthorId();
+                return $this->getCreatedAt();
                 break;
             default:
                 return null;
@@ -791,16 +785,16 @@ abstract class BaseBook extends BaseObject implements Persistent
      */
     public function toArray($keyType = BasePeer::TYPE_PHPNAME, $includeLazyLoadColumns = true, $alreadyDumpedObjects = array(), $includeForeignObjects = false)
     {
-        if (isset($alreadyDumpedObjects['Book'][$this->getPrimaryKey()])) {
+        if (isset($alreadyDumpedObjects['BookClubList'][$this->getPrimaryKey()])) {
             return '*RECURSION*';
         }
-        $alreadyDumpedObjects['Book'][$this->getPrimaryKey()] = true;
-        $keys = BookPeer::getFieldNames($keyType);
+        $alreadyDumpedObjects['BookClubList'][$this->getPrimaryKey()] = true;
+        $keys = BookClubListPeer::getFieldNames($keyType);
         $result = array(
             $keys[0] => $this->getId(),
-            $keys[1] => $this->getTitle(),
-            $keys[2] => $this->getIsbn(),
-            $keys[3] => $this->getAuthorId(),
+            $keys[1] => $this->getGroupLeader(),
+            $keys[2] => $this->getTheme(),
+            $keys[3] => $this->getCreatedAt(),
         );
         $virtualColumns = $this->virtualColumns;
         foreach ($virtualColumns as $key => $virtualColumn) {
@@ -808,9 +802,6 @@ abstract class BaseBook extends BaseObject implements Persistent
         }
 
         if ($includeForeignObjects) {
-            if (null !== $this->aAuthor) {
-                $result['Author'] = $this->aAuthor->toArray($keyType, $includeLazyLoadColumns,  $alreadyDumpedObjects, true);
-            }
             if (null !== $this->collBookListRels) {
                 $result['BookListRels'] = $this->collBookListRels->toArray(null, true, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
             }
@@ -832,7 +823,7 @@ abstract class BaseBook extends BaseObject implements Persistent
      */
     public function setByName($name, $value, $type = BasePeer::TYPE_PHPNAME)
     {
-        $pos = BookPeer::translateFieldName($name, $type, BasePeer::TYPE_NUM);
+        $pos = BookClubListPeer::translateFieldName($name, $type, BasePeer::TYPE_NUM);
 
         $this->setByPosition($pos, $value);
     }
@@ -852,13 +843,13 @@ abstract class BaseBook extends BaseObject implements Persistent
                 $this->setId($value);
                 break;
             case 1:
-                $this->setTitle($value);
+                $this->setGroupLeader($value);
                 break;
             case 2:
-                $this->setIsbn($value);
+                $this->setTheme($value);
                 break;
             case 3:
-                $this->setAuthorId($value);
+                $this->setCreatedAt($value);
                 break;
         } // switch()
     }
@@ -882,12 +873,12 @@ abstract class BaseBook extends BaseObject implements Persistent
      */
     public function fromArray($arr, $keyType = BasePeer::TYPE_PHPNAME)
     {
-        $keys = BookPeer::getFieldNames($keyType);
+        $keys = BookClubListPeer::getFieldNames($keyType);
 
         if (array_key_exists($keys[0], $arr)) $this->setId($arr[$keys[0]]);
-        if (array_key_exists($keys[1], $arr)) $this->setTitle($arr[$keys[1]]);
-        if (array_key_exists($keys[2], $arr)) $this->setIsbn($arr[$keys[2]]);
-        if (array_key_exists($keys[3], $arr)) $this->setAuthorId($arr[$keys[3]]);
+        if (array_key_exists($keys[1], $arr)) $this->setGroupLeader($arr[$keys[1]]);
+        if (array_key_exists($keys[2], $arr)) $this->setTheme($arr[$keys[2]]);
+        if (array_key_exists($keys[3], $arr)) $this->setCreatedAt($arr[$keys[3]]);
     }
 
     /**
@@ -897,12 +888,12 @@ abstract class BaseBook extends BaseObject implements Persistent
      */
     public function buildCriteria()
     {
-        $criteria = new Criteria(BookPeer::DATABASE_NAME);
+        $criteria = new Criteria(BookClubListPeer::DATABASE_NAME);
 
-        if ($this->isColumnModified(BookPeer::ID)) $criteria->add(BookPeer::ID, $this->id);
-        if ($this->isColumnModified(BookPeer::TITLE)) $criteria->add(BookPeer::TITLE, $this->title);
-        if ($this->isColumnModified(BookPeer::ISBN)) $criteria->add(BookPeer::ISBN, $this->isbn);
-        if ($this->isColumnModified(BookPeer::AUTHOR_ID)) $criteria->add(BookPeer::AUTHOR_ID, $this->author_id);
+        if ($this->isColumnModified(BookClubListPeer::ID)) $criteria->add(BookClubListPeer::ID, $this->id);
+        if ($this->isColumnModified(BookClubListPeer::GROUP_LEADER)) $criteria->add(BookClubListPeer::GROUP_LEADER, $this->group_leader);
+        if ($this->isColumnModified(BookClubListPeer::THEME)) $criteria->add(BookClubListPeer::THEME, $this->theme);
+        if ($this->isColumnModified(BookClubListPeer::CREATED_AT)) $criteria->add(BookClubListPeer::CREATED_AT, $this->created_at);
 
         return $criteria;
     }
@@ -917,8 +908,8 @@ abstract class BaseBook extends BaseObject implements Persistent
      */
     public function buildPkeyCriteria()
     {
-        $criteria = new Criteria(BookPeer::DATABASE_NAME);
-        $criteria->add(BookPeer::ID, $this->id);
+        $criteria = new Criteria(BookClubListPeer::DATABASE_NAME);
+        $criteria->add(BookClubListPeer::ID, $this->id);
 
         return $criteria;
     }
@@ -959,16 +950,16 @@ abstract class BaseBook extends BaseObject implements Persistent
      * If desired, this method can also make copies of all associated (fkey referrers)
      * objects.
      *
-     * @param object $copyObj An object of Book (or compatible) type.
+     * @param object $copyObj An object of BookClubList (or compatible) type.
      * @param boolean $deepCopy Whether to also copy all rows that refer (by fkey) to the current row.
      * @param boolean $makeNew Whether to reset autoincrement PKs and make the object new.
      * @throws PropelException
      */
     public function copyInto($copyObj, $deepCopy = false, $makeNew = true)
     {
-        $copyObj->setTitle($this->getTitle());
-        $copyObj->setIsbn($this->getIsbn());
-        $copyObj->setAuthorId($this->getAuthorId());
+        $copyObj->setGroupLeader($this->getGroupLeader());
+        $copyObj->setTheme($this->getTheme());
+        $copyObj->setCreatedAt($this->getCreatedAt());
 
         if ($deepCopy && !$this->startCopy) {
             // important: temporarily setNew(false) because this affects the behavior of
@@ -1002,7 +993,7 @@ abstract class BaseBook extends BaseObject implements Persistent
      * objects.
      *
      * @param boolean $deepCopy Whether to also copy all rows that refer (by fkey) to the current row.
-     * @return Book Clone of current object.
+     * @return BookClubList Clone of current object.
      * @throws PropelException
      */
     public function copy($deepCopy = false)
@@ -1022,67 +1013,15 @@ abstract class BaseBook extends BaseObject implements Persistent
      * same instance for all member of this class. The method could therefore
      * be static, but this would prevent one from overriding the behavior.
      *
-     * @return BookPeer
+     * @return BookClubListPeer
      */
     public function getPeer()
     {
         if (self::$peer === null) {
-            self::$peer = new BookPeer();
+            self::$peer = new BookClubListPeer();
         }
 
         return self::$peer;
-    }
-
-    /**
-     * Declares an association between this object and a Author object.
-     *
-     * @param                  Author $v
-     * @return Book The current object (for fluent API support)
-     * @throws PropelException
-     */
-    public function setAuthor(Author $v = null)
-    {
-        if ($v === null) {
-            $this->setAuthorId(NULL);
-        } else {
-            $this->setAuthorId($v->getId());
-        }
-
-        $this->aAuthor = $v;
-
-        // Add binding for other direction of this n:n relationship.
-        // If this object has already been added to the Author object, it will not be re-added.
-        if ($v !== null) {
-            $v->addBook($this);
-        }
-
-
-        return $this;
-    }
-
-
-    /**
-     * Get the associated Author object
-     *
-     * @param PropelPDO $con Optional Connection object.
-     * @param $doQuery Executes a query to get the object if required
-     * @return Author The associated Author object.
-     * @throws PropelException
-     */
-    public function getAuthor(PropelPDO $con = null, $doQuery = true)
-    {
-        if ($this->aAuthor === null && ($this->author_id !== null) && $doQuery) {
-            $this->aAuthor = AuthorQuery::create()->findPk($this->author_id, $con);
-            /* The following can be used additionally to
-                guarantee the related object contains a reference
-                to this object.  This level of coupling may, however, be
-                undesirable since it could result in an only partially populated collection
-                in the referenced object.
-                $this->aAuthor->addBooks($this);
-             */
-        }
-
-        return $this->aAuthor;
     }
 
 
@@ -1107,7 +1046,7 @@ abstract class BaseBook extends BaseObject implements Persistent
      * This does not modify the database; however, it will remove any associated objects, causing
      * them to be refetched by subsequent calls to accessor method.
      *
-     * @return Book The current object (for fluent API support)
+     * @return BookClubList The current object (for fluent API support)
      * @see        addBookListRels()
      */
     public function clearBookListRels()
@@ -1155,7 +1094,7 @@ abstract class BaseBook extends BaseObject implements Persistent
      * If the $criteria is not null, it is used to always fetch the results from the database.
      * Otherwise the results are fetched from the database the first time, then cached.
      * Next time the same method is called without $criteria, the cached collection is returned.
-     * If this Book is new, it will return
+     * If this BookClubList is new, it will return
      * an empty collection or the current collection; the criteria is ignored on a new object.
      *
      * @param Criteria $criteria optional Criteria object to narrow the query
@@ -1172,7 +1111,7 @@ abstract class BaseBook extends BaseObject implements Persistent
                 $this->initBookListRels();
             } else {
                 $collBookListRels = BookListRelQuery::create(null, $criteria)
-                    ->filterByBook($this)
+                    ->filterByBookClubList($this)
                     ->find($con);
                 if (null !== $criteria) {
                     if (false !== $this->collBookListRelsPartial && count($collBookListRels)) {
@@ -1216,7 +1155,7 @@ abstract class BaseBook extends BaseObject implements Persistent
      *
      * @param PropelCollection $bookListRels A Propel collection.
      * @param PropelPDO $con Optional connection object
-     * @return Book The current object (for fluent API support)
+     * @return BookClubList The current object (for fluent API support)
      */
     public function setBookListRels(PropelCollection $bookListRels, PropelPDO $con = null)
     {
@@ -1229,7 +1168,7 @@ abstract class BaseBook extends BaseObject implements Persistent
         $this->bookListRelsScheduledForDeletion = clone $bookListRelsToDelete;
 
         foreach ($bookListRelsToDelete as $bookListRelRemoved) {
-            $bookListRelRemoved->setBook(null);
+            $bookListRelRemoved->setBookClubList(null);
         }
 
         $this->collBookListRels = null;
@@ -1269,7 +1208,7 @@ abstract class BaseBook extends BaseObject implements Persistent
             }
 
             return $query
-                ->filterByBook($this)
+                ->filterByBookClubList($this)
                 ->count($con);
         }
 
@@ -1281,7 +1220,7 @@ abstract class BaseBook extends BaseObject implements Persistent
      * through the BookListRel foreign key attribute.
      *
      * @param    BookListRel $l BookListRel
-     * @return Book The current object (for fluent API support)
+     * @return BookClubList The current object (for fluent API support)
      */
     public function addBookListRel(BookListRel $l)
     {
@@ -1307,12 +1246,12 @@ abstract class BaseBook extends BaseObject implements Persistent
     protected function doAddBookListRel($bookListRel)
     {
         $this->collBookListRels[]= $bookListRel;
-        $bookListRel->setBook($this);
+        $bookListRel->setBookClubList($this);
     }
 
     /**
      * @param	BookListRel $bookListRel The bookListRel object to remove.
-     * @return Book The current object (for fluent API support)
+     * @return BookClubList The current object (for fluent API support)
      */
     public function removeBookListRel($bookListRel)
     {
@@ -1323,7 +1262,7 @@ abstract class BaseBook extends BaseObject implements Persistent
                 $this->bookListRelsScheduledForDeletion->clear();
             }
             $this->bookListRelsScheduledForDeletion[]= clone $bookListRel;
-            $bookListRel->setBook(null);
+            $bookListRel->setBookClubList(null);
         }
 
         return $this;
@@ -1333,171 +1272,171 @@ abstract class BaseBook extends BaseObject implements Persistent
     /**
      * If this collection has already been initialized with
      * an identical criteria, it returns the collection.
-     * Otherwise if this Book is new, it will return
-     * an empty collection; or if this Book has previously
+     * Otherwise if this BookClubList is new, it will return
+     * an empty collection; or if this BookClubList has previously
      * been saved, it will retrieve related BookListRels from storage.
      *
      * This method is protected by default in order to keep the public
      * api reasonable.  You can provide public methods for those you
-     * actually need in Book.
+     * actually need in BookClubList.
      *
      * @param Criteria $criteria optional Criteria object to narrow the query
      * @param PropelPDO $con optional connection object
      * @param string $join_behavior optional join type to use (defaults to Criteria::LEFT_JOIN)
      * @return PropelObjectCollection|BookListRel[] List of BookListRel objects
      */
-    public function getBookListRelsJoinBookClubList($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
+    public function getBookListRelsJoinBook($criteria = null, $con = null, $join_behavior = Criteria::LEFT_JOIN)
     {
         $query = BookListRelQuery::create(null, $criteria);
-        $query->joinWith('BookClubList', $join_behavior);
+        $query->joinWith('Book', $join_behavior);
 
         return $this->getBookListRels($query, $con);
     }
 
     /**
-     * Clears out the collBookClubLists collection
+     * Clears out the collBooks collection
      *
      * This does not modify the database; however, it will remove any associated objects, causing
      * them to be refetched by subsequent calls to accessor method.
      *
-     * @return Book The current object (for fluent API support)
-     * @see        addBookClubLists()
+     * @return BookClubList The current object (for fluent API support)
+     * @see        addBooks()
      */
-    public function clearBookClubLists()
+    public function clearBooks()
     {
-        $this->collBookClubLists = null; // important to set this to null since that means it is uninitialized
-        $this->collBookClubListsPartial = null;
+        $this->collBooks = null; // important to set this to null since that means it is uninitialized
+        $this->collBooksPartial = null;
 
         return $this;
     }
 
     /**
-     * Initializes the collBookClubLists collection.
+     * Initializes the collBooks collection.
      *
-     * By default this just sets the collBookClubLists collection to an empty collection (like clearBookClubLists());
+     * By default this just sets the collBooks collection to an empty collection (like clearBooks());
      * however, you may wish to override this method in your stub class to provide setting appropriate
      * to your application -- for example, setting the initial array to the values stored in database.
      *
      * @return void
      */
-    public function initBookClubLists()
+    public function initBooks()
     {
-        $this->collBookClubLists = new PropelObjectCollection();
-        $this->collBookClubLists->setModel('BookClubList');
+        $this->collBooks = new PropelObjectCollection();
+        $this->collBooks->setModel('Book');
     }
 
     /**
-     * Gets a collection of BookClubList objects related by a many-to-many relationship
+     * Gets a collection of Book objects related by a many-to-many relationship
      * to the current object by way of the book_x_list cross-reference table.
      *
      * If the $criteria is not null, it is used to always fetch the results from the database.
      * Otherwise the results are fetched from the database the first time, then cached.
      * Next time the same method is called without $criteria, the cached collection is returned.
-     * If this Book is new, it will return
+     * If this BookClubList is new, it will return
      * an empty collection or the current collection; the criteria is ignored on a new object.
      *
      * @param Criteria $criteria Optional query object to filter the query
      * @param PropelPDO $con Optional connection object
      *
-     * @return PropelObjectCollection|BookClubList[] List of BookClubList objects
+     * @return PropelObjectCollection|Book[] List of Book objects
      */
-    public function getBookClubLists($criteria = null, PropelPDO $con = null)
+    public function getBooks($criteria = null, PropelPDO $con = null)
     {
-        if (null === $this->collBookClubLists || null !== $criteria) {
-            if ($this->isNew() && null === $this->collBookClubLists) {
+        if (null === $this->collBooks || null !== $criteria) {
+            if ($this->isNew() && null === $this->collBooks) {
                 // return empty collection
-                $this->initBookClubLists();
+                $this->initBooks();
             } else {
-                $collBookClubLists = BookClubListQuery::create(null, $criteria)
-                    ->filterByBook($this)
+                $collBooks = BookQuery::create(null, $criteria)
+                    ->filterByBookClubList($this)
                     ->find($con);
                 if (null !== $criteria) {
-                    return $collBookClubLists;
+                    return $collBooks;
                 }
-                $this->collBookClubLists = $collBookClubLists;
+                $this->collBooks = $collBooks;
             }
         }
 
-        return $this->collBookClubLists;
+        return $this->collBooks;
     }
 
     /**
-     * Sets a collection of BookClubList objects related by a many-to-many relationship
+     * Sets a collection of Book objects related by a many-to-many relationship
      * to the current object by way of the book_x_list cross-reference table.
      * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
      * and new objects from the given Propel collection.
      *
-     * @param PropelCollection $bookClubLists A Propel collection.
+     * @param PropelCollection $books A Propel collection.
      * @param PropelPDO $con Optional connection object
-     * @return Book The current object (for fluent API support)
+     * @return BookClubList The current object (for fluent API support)
      */
-    public function setBookClubLists(PropelCollection $bookClubLists, PropelPDO $con = null)
+    public function setBooks(PropelCollection $books, PropelPDO $con = null)
     {
-        $this->clearBookClubLists();
-        $currentBookClubLists = $this->getBookClubLists(null, $con);
+        $this->clearBooks();
+        $currentBooks = $this->getBooks(null, $con);
 
-        $this->bookClubListsScheduledForDeletion = $currentBookClubLists->diff($bookClubLists);
+        $this->booksScheduledForDeletion = $currentBooks->diff($books);
 
-        foreach ($bookClubLists as $bookClubList) {
-            if (!$currentBookClubLists->contains($bookClubList)) {
-                $this->doAddBookClubList($bookClubList);
+        foreach ($books as $book) {
+            if (!$currentBooks->contains($book)) {
+                $this->doAddBook($book);
             }
         }
 
-        $this->collBookClubLists = $bookClubLists;
+        $this->collBooks = $books;
 
         return $this;
     }
 
     /**
-     * Gets the number of BookClubList objects related by a many-to-many relationship
+     * Gets the number of Book objects related by a many-to-many relationship
      * to the current object by way of the book_x_list cross-reference table.
      *
      * @param Criteria $criteria Optional query object to filter the query
      * @param boolean $distinct Set to true to force count distinct
      * @param PropelPDO $con Optional connection object
      *
-     * @return int the number of related BookClubList objects
+     * @return int the number of related Book objects
      */
-    public function countBookClubLists($criteria = null, $distinct = false, PropelPDO $con = null)
+    public function countBooks($criteria = null, $distinct = false, PropelPDO $con = null)
     {
-        if (null === $this->collBookClubLists || null !== $criteria) {
-            if ($this->isNew() && null === $this->collBookClubLists) {
+        if (null === $this->collBooks || null !== $criteria) {
+            if ($this->isNew() && null === $this->collBooks) {
                 return 0;
             } else {
-                $query = BookClubListQuery::create(null, $criteria);
+                $query = BookQuery::create(null, $criteria);
                 if ($distinct) {
                     $query->distinct();
                 }
 
                 return $query
-                    ->filterByBook($this)
+                    ->filterByBookClubList($this)
                     ->count($con);
             }
         } else {
-            return count($this->collBookClubLists);
+            return count($this->collBooks);
         }
     }
 
     /**
-     * Associate a BookClubList object to this object
+     * Associate a Book object to this object
      * through the book_x_list cross reference table.
      *
-     * @param  BookClubList $bookClubList The BookListRel object to relate
-     * @return Book The current object (for fluent API support)
+     * @param  Book $book The BookListRel object to relate
+     * @return BookClubList The current object (for fluent API support)
      */
-    public function addBookClubList(BookClubList $bookClubList)
+    public function addBook(Book $book)
     {
-        if ($this->collBookClubLists === null) {
-            $this->initBookClubLists();
+        if ($this->collBooks === null) {
+            $this->initBooks();
         }
 
-        if (!$this->collBookClubLists->contains($bookClubList)) { // only add it if the **same** object is not already associated
-            $this->doAddBookClubList($bookClubList);
-            $this->collBookClubLists[] = $bookClubList;
+        if (!$this->collBooks->contains($book)) { // only add it if the **same** object is not already associated
+            $this->doAddBook($book);
+            $this->collBooks[] = $book;
 
-            if ($this->bookClubListsScheduledForDeletion and $this->bookClubListsScheduledForDeletion->contains($bookClubList)) {
-                $this->bookClubListsScheduledForDeletion->remove($this->bookClubListsScheduledForDeletion->search($bookClubList));
+            if ($this->booksScheduledForDeletion and $this->booksScheduledForDeletion->contains($book)) {
+                $this->booksScheduledForDeletion->remove($this->booksScheduledForDeletion->search($book));
             }
         }
 
@@ -1505,37 +1444,37 @@ abstract class BaseBook extends BaseObject implements Persistent
     }
 
     /**
-     * @param	BookClubList $bookClubList The bookClubList object to add.
+     * @param	Book $book The book object to add.
      */
-    protected function doAddBookClubList(BookClubList $bookClubList)
+    protected function doAddBook(Book $book)
     {
         // set the back reference to this object directly as using provided method either results
         // in endless loop or in multiple relations
-        if (!$bookClubList->getBooks()->contains($this)) { $bookListRel = new BookListRel();
-            $bookListRel->setBookClubList($bookClubList);
+        if (!$book->getBookClubLists()->contains($this)) { $bookListRel = new BookListRel();
+            $bookListRel->setBook($book);
             $this->addBookListRel($bookListRel);
 
-            $foreignCollection = $bookClubList->getBooks();
+            $foreignCollection = $book->getBookClubLists();
             $foreignCollection[] = $this;
         }
     }
 
     /**
-     * Remove a BookClubList object to this object
+     * Remove a Book object to this object
      * through the book_x_list cross reference table.
      *
-     * @param BookClubList $bookClubList The BookListRel object to relate
-     * @return Book The current object (for fluent API support)
+     * @param Book $book The BookListRel object to relate
+     * @return BookClubList The current object (for fluent API support)
      */
-    public function removeBookClubList(BookClubList $bookClubList)
+    public function removeBook(Book $book)
     {
-        if ($this->getBookClubLists()->contains($bookClubList)) {
-            $this->collBookClubLists->remove($this->collBookClubLists->search($bookClubList));
-            if (null === $this->bookClubListsScheduledForDeletion) {
-                $this->bookClubListsScheduledForDeletion = clone $this->collBookClubLists;
-                $this->bookClubListsScheduledForDeletion->clear();
+        if ($this->getBooks()->contains($book)) {
+            $this->collBooks->remove($this->collBooks->search($book));
+            if (null === $this->booksScheduledForDeletion) {
+                $this->booksScheduledForDeletion = clone $this->collBooks;
+                $this->booksScheduledForDeletion->clear();
             }
-            $this->bookClubListsScheduledForDeletion[]= $bookClubList;
+            $this->booksScheduledForDeletion[]= $book;
         }
 
         return $this;
@@ -1547,9 +1486,9 @@ abstract class BaseBook extends BaseObject implements Persistent
     public function clear()
     {
         $this->id = null;
-        $this->title = null;
-        $this->isbn = null;
-        $this->author_id = null;
+        $this->group_leader = null;
+        $this->theme = null;
+        $this->created_at = null;
         $this->alreadyInSave = false;
         $this->alreadyInValidation = false;
         $this->alreadyInClearAllReferencesDeep = false;
@@ -1577,13 +1516,10 @@ abstract class BaseBook extends BaseObject implements Persistent
                     $o->clearAllReferences($deep);
                 }
             }
-            if ($this->collBookClubLists) {
-                foreach ($this->collBookClubLists as $o) {
+            if ($this->collBooks) {
+                foreach ($this->collBooks as $o) {
                     $o->clearAllReferences($deep);
                 }
-            }
-            if ($this->aAuthor instanceof Persistent) {
-              $this->aAuthor->clearAllReferences($deep);
             }
 
             $this->alreadyInClearAllReferencesDeep = false;
@@ -1593,21 +1529,20 @@ abstract class BaseBook extends BaseObject implements Persistent
             $this->collBookListRels->clearIterator();
         }
         $this->collBookListRels = null;
-        if ($this->collBookClubLists instanceof PropelCollection) {
-            $this->collBookClubLists->clearIterator();
+        if ($this->collBooks instanceof PropelCollection) {
+            $this->collBooks->clearIterator();
         }
-        $this->collBookClubLists = null;
-        $this->aAuthor = null;
+        $this->collBooks = null;
     }
 
     /**
      * return the string representation of this object
      *
-     * @return string The value of the 'title' column
+     * @return string
      */
     public function __toString()
     {
-        return (string) $this->getTitle();
+        return (string) $this->exportTo(BookClubListPeer::DEFAULT_STRING_FORMAT);
     }
 
     /**

@@ -48,6 +48,49 @@ CREATE TABLE `author`
 ) ENGINE=MyISAM;
 
 -- ---------------------------------------------------------------------
+-- book_club_list
+-- ---------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `book_club_list`;
+
+CREATE TABLE `book_club_list`
+(
+    `id` INTEGER NOT NULL AUTO_INCREMENT COMMENT 'Unique ID for a school reading list.',
+    `group_leader` VARCHAR(100) NOT NULL COMMENT 'The name of the teacher in charge of summer reading.',
+    `theme` VARCHAR(50) COMMENT 'The theme, if applicable, for the reading list.',
+    `created_at` DATETIME,
+    PRIMARY KEY (`id`)
+) ENGINE=MyISAM COMMENT='Reading list for a book club.';
+
+-- ---------------------------------------------------------------------
+-- book_x_list
+-- ---------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `book_x_list`;
+
+CREATE TABLE `book_x_list`
+(
+    `book_id` INTEGER NOT NULL COMMENT 'Fkey to book.id',
+    `book_club_list_id` INTEGER NOT NULL COMMENT 'Fkey to book_club_list.id',
+    PRIMARY KEY (`book_id`,`book_club_list_id`),
+    INDEX `book_x_list_FI_2` (`book_club_list_id`)
+) ENGINE=MyISAM COMMENT='Cross-reference table for many-to-many relationship between book rows and book_club_list rows.';
+
+-- ---------------------------------------------------------------------
+-- task
+-- ---------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `task`;
+
+CREATE TABLE `task`
+(
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `description` VARCHAR(100),
+    `tags` VARCHAR(20),
+    PRIMARY KEY (`id`)
+) ENGINE=MyISAM;
+
+-- ---------------------------------------------------------------------
 -- product
 -- ---------------------------------------------------------------------
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database name="default" namespace="Acme\TaskBundle\Model" defaultIdMethod="native">
+    <table name="task">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true" />
+        <column name="description" type="varchar" primaryString="1" size="100" />
+        <column name="tags" type="varchar" size="20" />      
+    </table>    
+</database>

@@ -1,43 +1,6 @@
-acme_library_homepage:
-    path:     /hello/{name}
-    defaults: { _controller: AcmeLibraryBundle:Default:index }
-
-acme_library_book:
-    path:     /book/
-    defaults: { _controller: AcmeLibraryBundle:Book:index }
-
-acme_library_book_new:
-    path:     /book/new
-    defaults: { _controller: AcmeLibraryBundle:Book:new }
-    
-acme_library_book_get:
-    path:     /book/{id}
-    defaults: { _controller: AcmeLibraryBundle:Book:get }
-    
-acme_library_book_edit:
-    path:     /book/edit/{id}
-    defaults: { _controller: AcmeLibraryBundle:Book:edit }
-
-acme_library_book_remove:
-    path:     /book/remove/{id}
-    defaults: { _controller: AcmeLibraryBundle:Book:remove }
-    
-acme_library_author:
-    path:     /author/
-    defaults: { _controller: AcmeLibraryBundle:Author:index }
-    
-acme_library_author_new:
-    path:     /author/new
-    defaults: { _controller: AcmeLibraryBundle:Author:new }
-
-acme_library_author_get:    
-    path:     /author/{id}
-    defaults: { _controller: AcmeLibraryBundle:Author:get }
-    
-acme_library_author_edit:
-    path:     /author/edit/{id}
-    defaults: { _controller: AcmeLibraryBundle:Author:edit }
-
-acme_library_author_remove:
-    path:     /author/remove/{id}
-    defaults: { _controller: AcmeLibraryBundle:Author:remove }
+LibraryBundle\Author:
+    properties:
+        first_name:
+            - NotBlank: {This value should not be blank}
+        last_name:
+            - NotBlank: {This value should not be blank}

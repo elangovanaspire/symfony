@@ -7,7 +7,7 @@ use \TableMap;
 
 
 /**
- * This class defines the structure of the 'book' table.
+ * This class defines the structure of the 'book_club_list' table.
  *
  *
  *
@@ -18,13 +18,13 @@ use \TableMap;
  *
  * @package    propel.generator.src.Acme.LibraryBundle.Model.map
  */
-class BookTableMap extends TableMap
+class BookClubListTableMap extends TableMap
 {
 
     /**
      * The (dot-path) name of this class
      */
-    const CLASS_NAME = 'src.Acme.LibraryBundle.Model.map.BookTableMap';
+    const CLASS_NAME = 'src.Acme.LibraryBundle.Model.map.BookClubListTableMap';
 
     /**
      * Initialize the table attributes, columns and validators
@@ -36,17 +36,16 @@ class BookTableMap extends TableMap
     public function initialize()
     {
         // attributes
-        $this->setName('book');
-        $this->setPhpName('Book');
-        $this->setClassname('Acme\\LibraryBundle\\Model\\Book');
+        $this->setName('book_club_list');
+        $this->setPhpName('BookClubList');
+        $this->setClassname('Acme\\LibraryBundle\\Model\\BookClubList');
         $this->setPackage('src.Acme.LibraryBundle.Model');
         $this->setUseIdGenerator(true);
         // columns
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, null, null);
-        $this->addColumn('title', 'Title', 'VARCHAR', false, 100, null);
-        $this->getColumn('title', false)->setPrimaryString(true);
-        $this->addColumn('isbn', 'Isbn', 'VARCHAR', false, 20, null);
-        $this->addForeignKey('author_id', 'AuthorId', 'INTEGER', 'author', 'id', false, null, null);
+        $this->addColumn('group_leader', 'GroupLeader', 'VARCHAR', true, 100, null);
+        $this->addColumn('theme', 'Theme', 'VARCHAR', false, 50, null);
+        $this->addColumn('created_at', 'CreatedAt', 'TIMESTAMP', false, null, null);
         // validators
     } // initialize()
 
@@ -55,9 +54,8 @@ class BookTableMap extends TableMap
      */
     public function buildRelations()
     {
-        $this->addRelation('Author', 'Acme\\LibraryBundle\\Model\\Author', RelationMap::MANY_TO_ONE, array('author_id' => 'id', ), null, null);
-        $this->addRelation('BookListRel', 'Acme\\LibraryBundle\\Model\\BookListRel', RelationMap::ONE_TO_MANY, array('id' => 'book_id', ), 'CASCADE', null, 'BookListRels');
-        $this->addRelation('BookClubList', 'Acme\\LibraryBundle\\Model\\BookClubList', RelationMap::MANY_TO_MANY, array(), 'CASCADE', null, 'BookClubLists');
+        $this->addRelation('BookListRel', 'Acme\\LibraryBundle\\Model\\BookListRel', RelationMap::ONE_TO_MANY, array('id' => 'book_club_list_id', ), 'CASCADE', null, 'BookListRels');
+        $this->addRelation('Book', 'Acme\\LibraryBundle\\Model\\Book', RelationMap::MANY_TO_MANY, array(), 'CASCADE', null, 'Books');
     } // buildRelations()
 
-} // BookTableMap
+} // BookClubListTableMap

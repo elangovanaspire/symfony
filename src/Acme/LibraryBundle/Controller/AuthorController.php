@@ -38,15 +38,17 @@ class AuthorController extends Controller
     }
     
     
-    private function processForm(Author $book)
+    private function processForm(Author $author)
     {
-        $statusCode = $book->isNew() ? 201 : 204;
-
-        $form = $this->createForm(new AuthorType(), $book);
+         $statusCode = $author->isNew() ? 201 : 204;
+ 
+        $form = $this->createForm(new AuthorType(), $author);
         $form->handleRequest($this->getRequest());
+        
+
 
         if ($form->isValid()) {
-            $book->save();
+            $author->save();
 
             $response = new Response();
             $response->setStatusCode($statusCode);
@@ -55,7 +57,7 @@ class AuthorController extends Controller
             if (201 === $statusCode) {
                 $response->headers->set('Location',
                     $this->generateUrl(
-                        'acme_library_author_get', array('id' => $book->getId()),
+                        'acme_library_author_get', array('id' => $author->getId()),
                         true // absolute
                     )
                 );
@@ -73,17 +75,17 @@ class AuthorController extends Controller
     
      public function editAction($id)
     {
-        if (null === $book = AuthorQuery::create()->findPk($id)) {
-            $book = new Author();
-            $book->setId($book);
+        if (null === $author = AuthorQuery::create()->findPk($id)) {
+            $author = new Author();
+            $author->setId($author);
         }
 
-        return $this->processForm($book);
+        return $this->processForm($author);
     }
     
-     public function removeAction(Book $book)
+     public function removeAction(Author $author)
     {
-        $book->delete();
+        $author->delete();
         return $this->render('AcmeLibraryBundle:Author:index.html.twig');
     }
    

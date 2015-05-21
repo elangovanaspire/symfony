@@ -1,6 +1,6 @@
 <?php
 
-namespace Acme\LibraryBundle\Model\om;
+namespace Acme\TaskBundle\Model\om;
 
 use \BasePeer;
 use \Criteria;
@@ -9,56 +9,51 @@ use \PDOStatement;
 use \Propel;
 use \PropelException;
 use \PropelPDO;
-use Acme\LibraryBundle\Model\AuthorPeer;
-use Acme\LibraryBundle\Model\Book;
-use Acme\LibraryBundle\Model\BookListRelPeer;
-use Acme\LibraryBundle\Model\BookPeer;
-use Acme\LibraryBundle\Model\map\BookTableMap;
+use Acme\TaskBundle\Model\Task;
+use Acme\TaskBundle\Model\TaskPeer;
+use Acme\TaskBundle\Model\map\TaskTableMap;
 
-abstract class BaseBookPeer
+abstract class BaseTaskPeer
 {
 
     /** the default database name for this class */
     const DATABASE_NAME = 'default';
 
     /** the table name for this class */
-    const TABLE_NAME = 'book';
+    const TABLE_NAME = 'task';
 
     /** the related Propel class for this table */
-    const OM_CLASS = 'Acme\\LibraryBundle\\Model\\Book';
+    const OM_CLASS = 'Acme\\TaskBundle\\Model\\Task';
 
     /** the related TableMap class for this table */
-    const TM_CLASS = 'Acme\\LibraryBundle\\Model\\map\\BookTableMap';
+    const TM_CLASS = 'Acme\\TaskBundle\\Model\\map\\TaskTableMap';
 
     /** The total number of columns. */
-    const NUM_COLUMNS = 4;
+    const NUM_COLUMNS = 3;
 
     /** The number of lazy-loaded columns. */
     const NUM_LAZY_LOAD_COLUMNS = 0;
 
     /** The number of columns to hydrate (NUM_COLUMNS - NUM_LAZY_LOAD_COLUMNS) */
-    const NUM_HYDRATE_COLUMNS = 4;
+    const NUM_HYDRATE_COLUMNS = 3;
 
     /** the column name for the id field */
-    const ID = 'book.id';
+    const ID = 'task.id';
 
-    /** the column name for the title field */
-    const TITLE = 'book.title';
+    /** the column name for the description field */
+    const DESCRIPTION = 'task.description';
 
-    /** the column name for the isbn field */
-    const ISBN = 'book.isbn';
-
-    /** the column name for the author_id field */
-    const AUTHOR_ID = 'book.author_id';
+    /** the column name for the tags field */
+    const TAGS = 'task.tags';
 
     /** The default string format for model objects of the related table **/
     const DEFAULT_STRING_FORMAT = 'YAML';
 
     /**
-     * An identity map to hold any loaded instances of Book objects.
+     * An identity map to hold any loaded instances of Task objects.
      * This must be public so that other peer classes can access this when hydrating from JOIN
      * queries.
-     * @var        array Book[]
+     * @var        array Task[]
      */
     public static $instances = array();
 
@@ -67,30 +62,30 @@ abstract class BaseBookPeer
      * holds an array of fieldnames
      *
      * first dimension keys are the type constants
-     * e.g. BookPeer::$fieldNames[BookPeer::TYPE_PHPNAME][0] = 'Id'
+     * e.g. TaskPeer::$fieldNames[TaskPeer::TYPE_PHPNAME][0] = 'Id'
      */
     protected static $fieldNames = array (
-        BasePeer::TYPE_PHPNAME => array ('Id', 'Title', 'Isbn', 'AuthorId', ),
-        BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'title', 'isbn', 'authorId', ),
-        BasePeer::TYPE_COLNAME => array (BookPeer::ID, BookPeer::TITLE, BookPeer::ISBN, BookPeer::AUTHOR_ID, ),
-        BasePeer::TYPE_RAW_COLNAME => array ('ID', 'TITLE', 'ISBN', 'AUTHOR_ID', ),
-        BasePeer::TYPE_FIELDNAME => array ('id', 'title', 'isbn', 'author_id', ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, )
+        BasePeer::TYPE_PHPNAME => array ('Id', 'Description', 'Tags', ),
+        BasePeer::TYPE_STUDLYPHPNAME => array ('id', 'description', 'tags', ),
+        BasePeer::TYPE_COLNAME => array (TaskPeer::ID, TaskPeer::DESCRIPTION, TaskPeer::TAGS, ),
+        BasePeer::TYPE_RAW_COLNAME => array ('ID', 'DESCRIPTION', 'TAGS', ),
+        BasePeer::TYPE_FIELDNAME => array ('id', 'description', 'tags', ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, )
     );
 
     /**
      * holds an array of keys for quick access to the fieldnames array
      *
      * first dimension keys are the type constants
-     * e.g. BookPeer::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
+     * e.g. TaskPeer::$fieldNames[BasePeer::TYPE_PHPNAME]['Id'] = 0
      */
     protected static $fieldKeys = array (
-        BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'Title' => 1, 'Isbn' => 2, 'AuthorId' => 3, ),
-        BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'title' => 1, 'isbn' => 2, 'authorId' => 3, ),
-        BasePeer::TYPE_COLNAME => array (BookPeer::ID => 0, BookPeer::TITLE => 1, BookPeer::ISBN => 2, BookPeer::AUTHOR_ID => 3, ),
-        BasePeer::TYPE_RAW_COLNAME => array ('ID' => 0, 'TITLE' => 1, 'ISBN' => 2, 'AUTHOR_ID' => 3, ),
-        BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'title' => 1, 'isbn' => 2, 'author_id' => 3, ),
-        BasePeer::TYPE_NUM => array (0, 1, 2, 3, )
+        BasePeer::TYPE_PHPNAME => array ('Id' => 0, 'Description' => 1, 'Tags' => 2, ),
+        BasePeer::TYPE_STUDLYPHPNAME => array ('id' => 0, 'description' => 1, 'tags' => 2, ),
+        BasePeer::TYPE_COLNAME => array (TaskPeer::ID => 0, TaskPeer::DESCRIPTION => 1, TaskPeer::TAGS => 2, ),
+        BasePeer::TYPE_RAW_COLNAME => array ('ID' => 0, 'DESCRIPTION' => 1, 'TAGS' => 2, ),
+        BasePeer::TYPE_FIELDNAME => array ('id' => 0, 'description' => 1, 'tags' => 2, ),
+        BasePeer::TYPE_NUM => array (0, 1, 2, )
     );
 
     /**
@@ -105,10 +100,10 @@ abstract class BaseBookPeer
      */
     public static function translateFieldName($name, $fromType, $toType)
     {
-        $toNames = BookPeer::getFieldNames($toType);
-        $key = isset(BookPeer::$fieldKeys[$fromType][$name]) ? BookPeer::$fieldKeys[$fromType][$name] : null;
+        $toNames = TaskPeer::getFieldNames($toType);
+        $key = isset(TaskPeer::$fieldKeys[$fromType][$name]) ? TaskPeer::$fieldKeys[$fromType][$name] : null;
         if ($key === null) {
-            throw new PropelException("'$name' could not be found in the field names of type '$fromType'. These are: " . print_r(BookPeer::$fieldKeys[$fromType], true));
+            throw new PropelException("'$name' could not be found in the field names of type '$fromType'. These are: " . print_r(TaskPeer::$fieldKeys[$fromType], true));
         }
 
         return $toNames[$key];
@@ -125,11 +120,11 @@ abstract class BaseBookPeer
      */
     public static function getFieldNames($type = BasePeer::TYPE_PHPNAME)
     {
-        if (!array_key_exists($type, BookPeer::$fieldNames)) {
+        if (!array_key_exists($type, TaskPeer::$fieldNames)) {
             throw new PropelException('Method getFieldNames() expects the parameter $type to be one of the class constants BasePeer::TYPE_PHPNAME, BasePeer::TYPE_STUDLYPHPNAME, BasePeer::TYPE_COLNAME, BasePeer::TYPE_FIELDNAME, BasePeer::TYPE_NUM. ' . $type . ' was given.');
         }
 
-        return BookPeer::$fieldNames[$type];
+        return TaskPeer::$fieldNames[$type];
     }
 
     /**
@@ -141,12 +136,12 @@ abstract class BaseBookPeer
      *		$c->addJoin(TablePeer::alias("alias1", TablePeer::PRIMARY_KEY_COLUMN), TablePeer::PRIMARY_KEY_COLUMN);
      * </code>
      * @param      string $alias The alias for the current table.
-     * @param      string $column The column name for current table. (i.e. BookPeer::COLUMN_NAME).
+     * @param      string $column The column name for current table. (i.e. TaskPeer::COLUMN_NAME).
      * @return string
      */
     public static function alias($alias, $column)
     {
-        return str_replace(BookPeer::TABLE_NAME.'.', $alias.'.', $column);
+        return str_replace(TaskPeer::TABLE_NAME.'.', $alias.'.', $column);
     }
 
     /**
@@ -164,15 +159,13 @@ abstract class BaseBookPeer
     public static function addSelectColumns(Criteria $criteria, $alias = null)
     {
         if (null === $alias) {
-            $criteria->addSelectColumn(BookPeer::ID);
-            $criteria->addSelectColumn(BookPeer::TITLE);
-            $criteria->addSelectColumn(BookPeer::ISBN);
-            $criteria->addSelectColumn(BookPeer::AUTHOR_ID);
+            $criteria->addSelectColumn(TaskPeer::ID);
+            $criteria->addSelectColumn(TaskPeer::DESCRIPTION);
+            $criteria->addSelectColumn(TaskPeer::TAGS);
         } else {
             $criteria->addSelectColumn($alias . '.id');
-            $criteria->addSelectColumn($alias . '.title');
-            $criteria->addSelectColumn($alias . '.isbn');
-            $criteria->addSelectColumn($alias . '.author_id');
+            $criteria->addSelectColumn($alias . '.description');
+            $criteria->addSelectColumn($alias . '.tags');
         }
     }
 
@@ -192,21 +185,21 @@ abstract class BaseBookPeer
         // We need to set the primary table name, since in the case that there are no WHERE columns
         // it will be impossible for the BasePeer::createSelectSql() method to determine which
         // tables go into the FROM clause.
-        $criteria->setPrimaryTableName(BookPeer::TABLE_NAME);
+        $criteria->setPrimaryTableName(TaskPeer::TABLE_NAME);
 
         if ($distinct && !in_array(Criteria::DISTINCT, $criteria->getSelectModifiers())) {
             $criteria->setDistinct();
         }
 
         if (!$criteria->hasSelectClause()) {
-            BookPeer::addSelectColumns($criteria);
+            TaskPeer::addSelectColumns($criteria);
         }
 
         $criteria->clearOrderByColumns(); // ORDER BY won't ever affect the count
-        $criteria->setDbName(BookPeer::DATABASE_NAME); // Set the correct dbName
+        $criteria->setDbName(TaskPeer::DATABASE_NAME); // Set the correct dbName
 
         if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_READ);
+            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_READ);
         }
         // BasePeer returns a PDOStatement
         $stmt = BasePeer::doCount($criteria, $con);
@@ -225,7 +218,7 @@ abstract class BaseBookPeer
      *
      * @param      Criteria $criteria object used to create the SELECT statement.
      * @param      PropelPDO $con
-     * @return Book
+     * @return Task
      * @throws PropelException Any exceptions caught during processing will be
      *		 rethrown wrapped into a PropelException.
      */
@@ -233,7 +226,7 @@ abstract class BaseBookPeer
     {
         $critcopy = clone $criteria;
         $critcopy->setLimit(1);
-        $objects = BookPeer::doSelect($critcopy, $con);
+        $objects = TaskPeer::doSelect($critcopy, $con);
         if ($objects) {
             return $objects[0];
         }
@@ -251,7 +244,7 @@ abstract class BaseBookPeer
      */
     public static function doSelect(Criteria $criteria, PropelPDO $con = null)
     {
-        return BookPeer::populateObjects(BookPeer::doSelectStmt($criteria, $con));
+        return TaskPeer::populateObjects(TaskPeer::doSelectStmt($criteria, $con));
     }
     /**
      * Prepares the Criteria object and uses the parent doSelect() method to execute a PDOStatement.
@@ -269,16 +262,16 @@ abstract class BaseBookPeer
     public static function doSelectStmt(Criteria $criteria, PropelPDO $con = null)
     {
         if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_READ);
+            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_READ);
         }
 
         if (!$criteria->hasSelectClause()) {
             $criteria = clone $criteria;
-            BookPeer::addSelectColumns($criteria);
+            TaskPeer::addSelectColumns($criteria);
         }
 
         // Set the correct dbName
-        $criteria->setDbName(BookPeer::DATABASE_NAME);
+        $criteria->setDbName(TaskPeer::DATABASE_NAME);
 
         // BasePeer returns a PDOStatement
         return BasePeer::doSelect($criteria, $con);
@@ -292,7 +285,7 @@ abstract class BaseBookPeer
      * to the cache in order to ensure that the same objects are always returned by doSelect*()
      * and retrieveByPK*() calls.
      *
-     * @param Book $obj A Book object.
+     * @param Task $obj A Task object.
      * @param      string $key (optional) key to use for instance map (for performance boost if key was already calculated externally).
      */
     public static function addInstanceToPool($obj, $key = null)
@@ -301,7 +294,7 @@ abstract class BaseBookPeer
             if ($key === null) {
                 $key = (string) $obj->getId();
             } // if key === null
-            BookPeer::$instances[$key] = $obj;
+            TaskPeer::$instances[$key] = $obj;
         }
     }
 
@@ -313,7 +306,7 @@ abstract class BaseBookPeer
      * methods in your stub classes -- you may need to explicitly remove objects
      * from the cache in order to prevent returning objects that no longer exist.
      *
-     * @param      mixed $value A Book object or a primary key value.
+     * @param      mixed $value A Task object or a primary key value.
      *
      * @return void
      * @throws PropelException - if the value is invalid.
@@ -321,17 +314,17 @@ abstract class BaseBookPeer
     public static function removeInstanceFromPool($value)
     {
         if (Propel::isInstancePoolingEnabled() && $value !== null) {
-            if (is_object($value) && $value instanceof Book) {
+            if (is_object($value) && $value instanceof Task) {
                 $key = (string) $value->getId();
             } elseif (is_scalar($value)) {
                 // assume we've been passed a primary key
                 $key = (string) $value;
             } else {
-                $e = new PropelException("Invalid value passed to removeInstanceFromPool().  Expected primary key or Book object; got " . (is_object($value) ? get_class($value) . ' object.' : var_export($value,true)));
+                $e = new PropelException("Invalid value passed to removeInstanceFromPool().  Expected primary key or Task object; got " . (is_object($value) ? get_class($value) . ' object.' : var_export($value,true)));
                 throw $e;
             }
 
-            unset(BookPeer::$instances[$key]);
+            unset(TaskPeer::$instances[$key]);
         }
     } // removeInstanceFromPool()
 
@@ -342,14 +335,14 @@ abstract class BaseBookPeer
      * a multi-column primary key, a serialize()d version of the primary key will be returned.
      *
      * @param      string $key The key (@see getPrimaryKeyHash()) for this instance.
-     * @return Book Found object or null if 1) no instance exists for specified key or 2) instance pooling has been disabled.
+     * @return Task Found object or null if 1) no instance exists for specified key or 2) instance pooling has been disabled.
      * @see        getPrimaryKeyHash()
      */
     public static function getInstanceFromPool($key)
     {
         if (Propel::isInstancePoolingEnabled()) {
-            if (isset(BookPeer::$instances[$key])) {
-                return BookPeer::$instances[$key];
+            if (isset(TaskPeer::$instances[$key])) {
+                return TaskPeer::$instances[$key];
             }
         }
 
@@ -364,22 +357,19 @@ abstract class BaseBookPeer
     public static function clearInstancePool($and_clear_all_references = false)
     {
       if ($and_clear_all_references) {
-        foreach (BookPeer::$instances as $instance) {
+        foreach (TaskPeer::$instances as $instance) {
           $instance->clearAllReferences(true);
         }
       }
-        BookPeer::$instances = array();
+        TaskPeer::$instances = array();
     }
 
     /**
-     * Method to invalidate the instance pool of all tables related to book
+     * Method to invalidate the instance pool of all tables related to task
      * by a foreign key with ON DELETE CASCADE
      */
     public static function clearRelatedInstancePool()
     {
-        // Invalidate objects in BookListRelPeer instance pool,
-        // since one or more of them may be deleted by ON DELETE CASCADE/SETNULL rule.
-        BookListRelPeer::clearInstancePool();
     }
 
     /**
@@ -429,11 +419,11 @@ abstract class BaseBookPeer
         $results = array();
 
         // set the class once to avoid overhead in the loop
-        $cls = BookPeer::getOMClass();
+        $cls = TaskPeer::getOMClass();
         // populate the object(s)
         while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
-            $key = BookPeer::getPrimaryKeyHashFromRow($row, 0);
-            if (null !== ($obj = BookPeer::getInstanceFromPool($key))) {
+            $key = TaskPeer::getPrimaryKeyHashFromRow($row, 0);
+            if (null !== ($obj = TaskPeer::getInstanceFromPool($key))) {
                 // We no longer rehydrate the object, since this can cause data loss.
                 // See http://www.propelorm.org/ticket/509
                 // $obj->hydrate($row, 0, true); // rehydrate
@@ -442,7 +432,7 @@ abstract class BaseBookPeer
                 $obj = new $cls();
                 $obj->hydrate($row);
                 $results[] = $obj;
-                BookPeer::addInstanceToPool($obj, $key);
+                TaskPeer::addInstanceToPool($obj, $key);
             } // if key exists
         }
         $stmt->closeCursor();
@@ -456,262 +446,24 @@ abstract class BaseBookPeer
      * @param      int $startcol The 0-based offset for reading from the resultset row.
      * @throws PropelException Any exceptions caught during processing will be
      *		 rethrown wrapped into a PropelException.
-     * @return array (Book object, last column rank)
+     * @return array (Task object, last column rank)
      */
     public static function populateObject($row, $startcol = 0)
     {
-        $key = BookPeer::getPrimaryKeyHashFromRow($row, $startcol);
-        if (null !== ($obj = BookPeer::getInstanceFromPool($key))) {
+        $key = TaskPeer::getPrimaryKeyHashFromRow($row, $startcol);
+        if (null !== ($obj = TaskPeer::getInstanceFromPool($key))) {
             // We no longer rehydrate the object, since this can cause data loss.
             // See http://www.propelorm.org/ticket/509
             // $obj->hydrate($row, $startcol, true); // rehydrate
-            $col = $startcol + BookPeer::NUM_HYDRATE_COLUMNS;
+            $col = $startcol + TaskPeer::NUM_HYDRATE_COLUMNS;
         } else {
-            $cls = BookPeer::OM_CLASS;
+            $cls = TaskPeer::OM_CLASS;
             $obj = new $cls();
             $col = $obj->hydrate($row, $startcol);
-            BookPeer::addInstanceToPool($obj, $key);
+            TaskPeer::addInstanceToPool($obj, $key);
         }
 
         return array($obj, $col);
-    }
-
-
-    /**
-     * Returns the number of rows matching criteria, joining the related Author table
-     *
-     * @param      Criteria $criteria
-     * @param      boolean $distinct Whether to select only distinct columns; deprecated: use Criteria->setDistinct() instead.
-     * @param      PropelPDO $con
-     * @param      String    $join_behavior the type of joins to use, defaults to Criteria::LEFT_JOIN
-     * @return int Number of matching rows.
-     */
-    public static function doCountJoinAuthor(Criteria $criteria, $distinct = false, PropelPDO $con = null, $join_behavior = Criteria::LEFT_JOIN)
-    {
-        // we're going to modify criteria, so copy it first
-        $criteria = clone $criteria;
-
-        // We need to set the primary table name, since in the case that there are no WHERE columns
-        // it will be impossible for the BasePeer::createSelectSql() method to determine which
-        // tables go into the FROM clause.
-        $criteria->setPrimaryTableName(BookPeer::TABLE_NAME);
-
-        if ($distinct && !in_array(Criteria::DISTINCT, $criteria->getSelectModifiers())) {
-            $criteria->setDistinct();
-        }
-
-        if (!$criteria->hasSelectClause()) {
-            BookPeer::addSelectColumns($criteria);
-        }
-
-        $criteria->clearOrderByColumns(); // ORDER BY won't ever affect the count
-
-        // Set the correct dbName
-        $criteria->setDbName(BookPeer::DATABASE_NAME);
-
-        if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_READ);
-        }
-
-        $criteria->addJoin(BookPeer::AUTHOR_ID, AuthorPeer::ID, $join_behavior);
-
-        $stmt = BasePeer::doCount($criteria, $con);
-
-        if ($row = $stmt->fetch(PDO::FETCH_NUM)) {
-            $count = (int) $row[0];
-        } else {
-            $count = 0; // no rows returned; we infer that means 0 matches.
-        }
-        $stmt->closeCursor();
-
-        return $count;
-    }
-
-
-    /**
-     * Selects a collection of Book objects pre-filled with their Author objects.
-     * @param      Criteria  $criteria
-     * @param      PropelPDO $con
-     * @param      String    $join_behavior the type of joins to use, defaults to Criteria::LEFT_JOIN
-     * @return array           Array of Book objects.
-     * @throws PropelException Any exceptions caught during processing will be
-     *		 rethrown wrapped into a PropelException.
-     */
-    public static function doSelectJoinAuthor(Criteria $criteria, $con = null, $join_behavior = Criteria::LEFT_JOIN)
-    {
-        $criteria = clone $criteria;
-
-        // Set the correct dbName if it has not been overridden
-        if ($criteria->getDbName() == Propel::getDefaultDB()) {
-            $criteria->setDbName(BookPeer::DATABASE_NAME);
-        }
-
-        BookPeer::addSelectColumns($criteria);
-        $startcol = BookPeer::NUM_HYDRATE_COLUMNS;
-        AuthorPeer::addSelectColumns($criteria);
-
-        $criteria->addJoin(BookPeer::AUTHOR_ID, AuthorPeer::ID, $join_behavior);
-
-        $stmt = BasePeer::doSelect($criteria, $con);
-        $results = array();
-
-        while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
-            $key1 = BookPeer::getPrimaryKeyHashFromRow($row, 0);
-            if (null !== ($obj1 = BookPeer::getInstanceFromPool($key1))) {
-                // We no longer rehydrate the object, since this can cause data loss.
-                // See http://www.propelorm.org/ticket/509
-                // $obj1->hydrate($row, 0, true); // rehydrate
-            } else {
-
-                $cls = BookPeer::getOMClass();
-
-                $obj1 = new $cls();
-                $obj1->hydrate($row);
-                BookPeer::addInstanceToPool($obj1, $key1);
-            } // if $obj1 already loaded
-
-            $key2 = AuthorPeer::getPrimaryKeyHashFromRow($row, $startcol);
-            if ($key2 !== null) {
-                $obj2 = AuthorPeer::getInstanceFromPool($key2);
-                if (!$obj2) {
-
-                    $cls = AuthorPeer::getOMClass();
-
-                    $obj2 = new $cls();
-                    $obj2->hydrate($row, $startcol);
-                    AuthorPeer::addInstanceToPool($obj2, $key2);
-                } // if obj2 already loaded
-
-                // Add the $obj1 (Book) to $obj2 (Author)
-                $obj2->addBook($obj1);
-
-            } // if joined row was not null
-
-            $results[] = $obj1;
-        }
-        $stmt->closeCursor();
-
-        return $results;
-    }
-
-
-    /**
-     * Returns the number of rows matching criteria, joining all related tables
-     *
-     * @param      Criteria $criteria
-     * @param      boolean $distinct Whether to select only distinct columns; deprecated: use Criteria->setDistinct() instead.
-     * @param      PropelPDO $con
-     * @param      String    $join_behavior the type of joins to use, defaults to Criteria::LEFT_JOIN
-     * @return int Number of matching rows.
-     */
-    public static function doCountJoinAll(Criteria $criteria, $distinct = false, PropelPDO $con = null, $join_behavior = Criteria::LEFT_JOIN)
-    {
-        // we're going to modify criteria, so copy it first
-        $criteria = clone $criteria;
-
-        // We need to set the primary table name, since in the case that there are no WHERE columns
-        // it will be impossible for the BasePeer::createSelectSql() method to determine which
-        // tables go into the FROM clause.
-        $criteria->setPrimaryTableName(BookPeer::TABLE_NAME);
-
-        if ($distinct && !in_array(Criteria::DISTINCT, $criteria->getSelectModifiers())) {
-            $criteria->setDistinct();
-        }
-
-        if (!$criteria->hasSelectClause()) {
-            BookPeer::addSelectColumns($criteria);
-        }
-
-        $criteria->clearOrderByColumns(); // ORDER BY won't ever affect the count
-
-        // Set the correct dbName
-        $criteria->setDbName(BookPeer::DATABASE_NAME);
-
-        if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_READ);
-        }
-
-        $criteria->addJoin(BookPeer::AUTHOR_ID, AuthorPeer::ID, $join_behavior);
-
-        $stmt = BasePeer::doCount($criteria, $con);
-
-        if ($row = $stmt->fetch(PDO::FETCH_NUM)) {
-            $count = (int) $row[0];
-        } else {
-            $count = 0; // no rows returned; we infer that means 0 matches.
-        }
-        $stmt->closeCursor();
-
-        return $count;
-    }
-
-    /**
-     * Selects a collection of Book objects pre-filled with all related objects.
-     *
-     * @param      Criteria  $criteria
-     * @param      PropelPDO $con
-     * @param      String    $join_behavior the type of joins to use, defaults to Criteria::LEFT_JOIN
-     * @return array           Array of Book objects.
-     * @throws PropelException Any exceptions caught during processing will be
-     *		 rethrown wrapped into a PropelException.
-     */
-    public static function doSelectJoinAll(Criteria $criteria, $con = null, $join_behavior = Criteria::LEFT_JOIN)
-    {
-        $criteria = clone $criteria;
-
-        // Set the correct dbName if it has not been overridden
-        if ($criteria->getDbName() == Propel::getDefaultDB()) {
-            $criteria->setDbName(BookPeer::DATABASE_NAME);
-        }
-
-        BookPeer::addSelectColumns($criteria);
-        $startcol2 = BookPeer::NUM_HYDRATE_COLUMNS;
-
-        AuthorPeer::addSelectColumns($criteria);
-        $startcol3 = $startcol2 + AuthorPeer::NUM_HYDRATE_COLUMNS;
-
-        $criteria->addJoin(BookPeer::AUTHOR_ID, AuthorPeer::ID, $join_behavior);
-
-        $stmt = BasePeer::doSelect($criteria, $con);
-        $results = array();
-
-        while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
-            $key1 = BookPeer::getPrimaryKeyHashFromRow($row, 0);
-            if (null !== ($obj1 = BookPeer::getInstanceFromPool($key1))) {
-                // We no longer rehydrate the object, since this can cause data loss.
-                // See http://www.propelorm.org/ticket/509
-                // $obj1->hydrate($row, 0, true); // rehydrate
-            } else {
-                $cls = BookPeer::getOMClass();
-
-                $obj1 = new $cls();
-                $obj1->hydrate($row);
-                BookPeer::addInstanceToPool($obj1, $key1);
-            } // if obj1 already loaded
-
-            // Add objects for joined Author rows
-
-            $key2 = AuthorPeer::getPrimaryKeyHashFromRow($row, $startcol2);
-            if ($key2 !== null) {
-                $obj2 = AuthorPeer::getInstanceFromPool($key2);
-                if (!$obj2) {
-
-                    $cls = AuthorPeer::getOMClass();
-
-                    $obj2 = new $cls();
-                    $obj2->hydrate($row, $startcol2);
-                    AuthorPeer::addInstanceToPool($obj2, $key2);
-                } // if obj2 loaded
-
-                // Add the $obj1 (Book) to the collection in $obj2 (Author)
-                $obj2->addBook($obj1);
-            } // if joined row not null
-
-            $results[] = $obj1;
-        }
-        $stmt->closeCursor();
-
-        return $results;
     }
 
     /**
@@ -723,7 +475,7 @@ abstract class BaseBookPeer
      */
     public static function getTableMap()
     {
-        return Propel::getDatabaseMap(BookPeer::DATABASE_NAME)->getTable(BookPeer::TABLE_NAME);
+        return Propel::getDatabaseMap(TaskPeer::DATABASE_NAME)->getTable(TaskPeer::TABLE_NAME);
     }
 
     /**
@@ -731,9 +483,9 @@ abstract class BaseBookPeer
      */
     public static function buildTableMap()
     {
-      $dbMap = Propel::getDatabaseMap(BaseBookPeer::DATABASE_NAME);
-      if (!$dbMap->hasTable(BaseBookPeer::TABLE_NAME)) {
-        $dbMap->addTableObject(new \Acme\LibraryBundle\Model\map\BookTableMap());
+      $dbMap = Propel::getDatabaseMap(BaseTaskPeer::DATABASE_NAME);
+      if (!$dbMap->hasTable(BaseTaskPeer::TABLE_NAME)) {
+        $dbMap->addTableObject(new \Acme\TaskBundle\Model\map\TaskTableMap());
       }
     }
 
@@ -745,13 +497,13 @@ abstract class BaseBookPeer
      */
     public static function getOMClass($row = 0, $colnum = 0)
     {
-        return BookPeer::OM_CLASS;
+        return TaskPeer::OM_CLASS;
     }
 
     /**
-     * Performs an INSERT on the database, given a Book or Criteria object.
+     * Performs an INSERT on the database, given a Task or Criteria object.
      *
-     * @param      mixed $values Criteria or Book object containing data that is used to create the INSERT statement.
+     * @param      mixed $values Criteria or Task object containing data that is used to create the INSERT statement.
      * @param      PropelPDO $con the PropelPDO connection to use
      * @return mixed           The new primary key.
      * @throws PropelException Any exceptions caught during processing will be
@@ -760,22 +512,22 @@ abstract class BaseBookPeer
     public static function doInsert($values, PropelPDO $con = null)
     {
         if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
+            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
         }
 
         if ($values instanceof Criteria) {
             $criteria = clone $values; // rename for clarity
         } else {
-            $criteria = $values->buildCriteria(); // build Criteria from Book object
+            $criteria = $values->buildCriteria(); // build Criteria from Task object
         }
 
-        if ($criteria->containsKey(BookPeer::ID) && $criteria->keyContainsValue(BookPeer::ID) ) {
-            throw new PropelException('Cannot insert a value for auto-increment primary key ('.BookPeer::ID.')');
+        if ($criteria->containsKey(TaskPeer::ID) && $criteria->keyContainsValue(TaskPeer::ID) ) {
+            throw new PropelException('Cannot insert a value for auto-increment primary key ('.TaskPeer::ID.')');
         }
 
 
         // Set the correct dbName
-        $criteria->setDbName(BookPeer::DATABASE_NAME);
+        $criteria->setDbName(TaskPeer::DATABASE_NAME);
 
         try {
             // use transaction because $criteria could contain info
@@ -792,9 +544,9 @@ abstract class BaseBookPeer
     }
 
     /**
-     * Performs an UPDATE on the database, given a Book or Criteria object.
+     * Performs an UPDATE on the database, given a Task or Criteria object.
      *
-     * @param      mixed $values Criteria or Book object containing data that is used to create the UPDATE statement.
+     * @param      mixed $values Criteria or Task object containing data that is used to create the UPDATE statement.
      * @param      PropelPDO $con The connection to use (specify PropelPDO connection object to exert more control over transactions).
      * @return int             The number of affected rows (if supported by underlying database driver).
      * @throws PropelException Any exceptions caught during processing will be
@@ -803,35 +555,35 @@ abstract class BaseBookPeer
     public static function doUpdate($values, PropelPDO $con = null)
     {
         if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
+            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
         }
 
-        $selectCriteria = new Criteria(BookPeer::DATABASE_NAME);
+        $selectCriteria = new Criteria(TaskPeer::DATABASE_NAME);
 
         if ($values instanceof Criteria) {
             $criteria = clone $values; // rename for clarity
 
-            $comparison = $criteria->getComparison(BookPeer::ID);
-            $value = $criteria->remove(BookPeer::ID);
+            $comparison = $criteria->getComparison(TaskPeer::ID);
+            $value = $criteria->remove(TaskPeer::ID);
             if ($value) {
-                $selectCriteria->add(BookPeer::ID, $value, $comparison);
+                $selectCriteria->add(TaskPeer::ID, $value, $comparison);
             } else {
-                $selectCriteria->setPrimaryTableName(BookPeer::TABLE_NAME);
+                $selectCriteria->setPrimaryTableName(TaskPeer::TABLE_NAME);
             }
 
-        } else { // $values is Book object
+        } else { // $values is Task object
             $criteria = $values->buildCriteria(); // gets full criteria
             $selectCriteria = $values->buildPkeyCriteria(); // gets criteria w/ primary key(s)
         }
 
         // set the correct dbName
-        $criteria->setDbName(BookPeer::DATABASE_NAME);
+        $criteria->setDbName(TaskPeer::DATABASE_NAME);
 
         return BasePeer::doUpdate($selectCriteria, $criteria, $con);
     }
 
     /**
-     * Deletes all rows from the book table.
+     * Deletes all rows from the task table.
      *
      * @param      PropelPDO $con the connection to use
      * @return int             The number of affected rows (if supported by underlying database driver).
@@ -840,20 +592,19 @@ abstract class BaseBookPeer
     public static function doDeleteAll(PropelPDO $con = null)
     {
         if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
+            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
         }
         $affectedRows = 0; // initialize var to track total num of affected rows
         try {
             // use transaction because $criteria could contain info
             // for more than one table or we could emulating ON DELETE CASCADE, etc.
             $con->beginTransaction();
-            $affectedRows += BookPeer::doOnDeleteCascade(new Criteria(BookPeer::DATABASE_NAME), $con);
-            $affectedRows += BasePeer::doDeleteAll(BookPeer::TABLE_NAME, $con, BookPeer::DATABASE_NAME);
+            $affectedRows += BasePeer::doDeleteAll(TaskPeer::TABLE_NAME, $con, TaskPeer::DATABASE_NAME);
             // Because this db requires some delete cascade/set null emulation, we have to
             // clear the cached instance *after* the emulation has happened (since
             // instances get re-added by the select statement contained therein).
-            BookPeer::clearInstancePool();
-            BookPeer::clearRelatedInstancePool();
+            TaskPeer::clearInstancePool();
+            TaskPeer::clearRelatedInstancePool();
             $con->commit();
 
             return $affectedRows;
@@ -864,9 +615,9 @@ abstract class BaseBookPeer
     }
 
     /**
-     * Performs a DELETE on the database, given a Book or Criteria object OR a primary key value.
+     * Performs a DELETE on the database, given a Task or Criteria object OR a primary key value.
      *
-     * @param      mixed $values Criteria or Book object or primary key or array of primary keys
+     * @param      mixed $values Criteria or Task object or primary key or array of primary keys
      *              which is used to create the DELETE statement
      * @param      PropelPDO $con the connection to use
      * @return int The number of affected rows (if supported by underlying database driver).  This includes CASCADE-related rows
@@ -877,22 +628,32 @@ abstract class BaseBookPeer
      public static function doDelete($values, PropelPDO $con = null)
      {
         if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
+            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
         }
 
         if ($values instanceof Criteria) {
+            // invalidate the cache for all objects of this type, since we have no
+            // way of knowing (without running a query) what objects should be invalidated
+            // from the cache based on this Criteria.
+            TaskPeer::clearInstancePool();
             // rename for clarity
             $criteria = clone $values;
-        } elseif ($values instanceof Book) { // it's a model object
+        } elseif ($values instanceof Task) { // it's a model object
+            // invalidate the cache for this single object
+            TaskPeer::removeInstanceFromPool($values);
             // create criteria based on pk values
             $criteria = $values->buildPkeyCriteria();
         } else { // it's a primary key, or an array of pks
-            $criteria = new Criteria(BookPeer::DATABASE_NAME);
-            $criteria->add(BookPeer::ID, (array) $values, Criteria::IN);
+            $criteria = new Criteria(TaskPeer::DATABASE_NAME);
+            $criteria->add(TaskPeer::ID, (array) $values, Criteria::IN);
+            // invalidate the cache for this object(s)
+            foreach ((array) $values as $singleval) {
+                TaskPeer::removeInstanceFromPool($singleval);
+            }
         }
 
         // Set the correct dbName
-        $criteria->setDbName(BookPeer::DATABASE_NAME);
+        $criteria->setDbName(TaskPeer::DATABASE_NAME);
 
         $affectedRows = 0; // initialize var to track total num of affected rows
 
@@ -901,25 +662,8 @@ abstract class BaseBookPeer
             // for more than one table or we could emulating ON DELETE CASCADE, etc.
             $con->beginTransaction();
 
-            // cloning the Criteria in case it's modified by doSelect() or doSelectStmt()
-            $c = clone $criteria;
-            $affectedRows += BookPeer::doOnDeleteCascade($c, $con);
-
-            // Because this db requires some delete cascade/set null emulation, we have to
-            // clear the cached instance *after* the emulation has happened (since
-            // instances get re-added by the select statement contained therein).
-            if ($values instanceof Criteria) {
-                BookPeer::clearInstancePool();
-            } elseif ($values instanceof Book) { // it's a model object
-                BookPeer::removeInstanceFromPool($values);
-            } else { // it's a primary key, or an array of pks
-                foreach ((array) $values as $singleval) {
-                    BookPeer::removeInstanceFromPool($singleval);
-                }
-            }
-
             $affectedRows += BasePeer::doDelete($criteria, $con);
-            BookPeer::clearRelatedInstancePool();
+            TaskPeer::clearRelatedInstancePool();
             $con->commit();
 
             return $affectedRows;
@@ -930,46 +674,13 @@ abstract class BaseBookPeer
     }
 
     /**
-     * This is a method for emulating ON DELETE CASCADE for DBs that don't support this
-     * feature (like MySQL or SQLite).
-     *
-     * This method is not very speedy because it must perform a query first to get
-     * the implicated records and then perform the deletes by calling those Peer classes.
-     *
-     * This method should be used within a transaction if possible.
-     *
-     * @param      Criteria $criteria
-     * @param      PropelPDO $con
-     * @return int The number of affected rows (if supported by underlying database driver).
-     */
-    protected static function doOnDeleteCascade(Criteria $criteria, PropelPDO $con)
-    {
-        // initialize var to track total num of affected rows
-        $affectedRows = 0;
-
-        // first find the objects that are implicated by the $criteria
-        $objects = BookPeer::doSelect($criteria, $con);
-        foreach ($objects as $obj) {
-
-
-            // delete related BookListRel objects
-            $criteria = new Criteria(BookListRelPeer::DATABASE_NAME);
-
-            $criteria->add(BookListRelPeer::BOOK_ID, $obj->getId());
-            $affectedRows += BookListRelPeer::doDelete($criteria, $con);
-        }
-
-        return $affectedRows;
-    }
-
-    /**
-     * Validates all modified columns of given Book object.
+     * Validates all modified columns of given Task object.
      * If parameter $columns is either a single column name or an array of column names
      * than only those columns are validated.
      *
      * NOTICE: This does not apply to primary or foreign keys for now.
      *
-     * @param Book $obj The object to validate.
+     * @param Task $obj The object to validate.
      * @param      mixed $cols Column name or array of column names.
      *
      * @return mixed TRUE if all columns are valid or the error message of the first invalid column.
@@ -979,8 +690,8 @@ abstract class BaseBookPeer
         $columns = array();
 
         if ($cols) {
-            $dbMap = Propel::getDatabaseMap(BookPeer::DATABASE_NAME);
-            $tableMap = $dbMap->getTable(BookPeer::TABLE_NAME);
+            $dbMap = Propel::getDatabaseMap(TaskPeer::DATABASE_NAME);
+            $tableMap = $dbMap->getTable(TaskPeer::TABLE_NAME);
 
             if (! is_array($cols)) {
                 $cols = array($cols);
@@ -996,7 +707,7 @@ abstract class BaseBookPeer
 
         }
 
-        return BasePeer::doValidate(BookPeer::DATABASE_NAME, BookPeer::TABLE_NAME, $columns);
+        return BasePeer::doValidate(TaskPeer::DATABASE_NAME, TaskPeer::TABLE_NAME, $columns);
     }
 
     /**
@@ -1004,23 +715,23 @@ abstract class BaseBookPeer
      *
      * @param int $pk the primary key.
      * @param      PropelPDO $con the connection to use
-     * @return Book
+     * @return Task
      */
     public static function retrieveByPK($pk, PropelPDO $con = null)
     {
 
-        if (null !== ($obj = BookPeer::getInstanceFromPool((string) $pk))) {
+        if (null !== ($obj = TaskPeer::getInstanceFromPool((string) $pk))) {
             return $obj;
         }
 
         if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_READ);
+            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_READ);
         }
 
-        $criteria = new Criteria(BookPeer::DATABASE_NAME);
-        $criteria->add(BookPeer::ID, $pk);
+        $criteria = new Criteria(TaskPeer::DATABASE_NAME);
+        $criteria->add(TaskPeer::ID, $pk);
 
-        $v = BookPeer::doSelect($criteria, $con);
+        $v = TaskPeer::doSelect($criteria, $con);
 
         return !empty($v) > 0 ? $v[0] : null;
     }
@@ -1030,31 +741,31 @@ abstract class BaseBookPeer
      *
      * @param      array $pks List of primary keys
      * @param      PropelPDO $con the connection to use
-     * @return Book[]
+     * @return Task[]
      * @throws PropelException Any exceptions caught during processing will be
      *		 rethrown wrapped into a PropelException.
      */
     public static function retrieveByPKs($pks, PropelPDO $con = null)
     {
         if ($con === null) {
-            $con = Propel::getConnection(BookPeer::DATABASE_NAME, Propel::CONNECTION_READ);
+            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_READ);
         }
 
         $objs = null;
         if (empty($pks)) {
             $objs = array();
         } else {
-            $criteria = new Criteria(BookPeer::DATABASE_NAME);
-            $criteria->add(BookPeer::ID, $pks, Criteria::IN);
-            $objs = BookPeer::doSelect($criteria, $con);
+            $criteria = new Criteria(TaskPeer::DATABASE_NAME);
+            $criteria->add(TaskPeer::ID, $pks, Criteria::IN);
+            $objs = TaskPeer::doSelect($criteria, $con);
         }
 
         return $objs;
     }
 
-} // BaseBookPeer
+} // BaseTaskPeer
 
 // This is the static code needed to register the TableMap for this table with the main Propel class.
 //
-BaseBookPeer::buildTableMap();
+BaseTaskPeer::buildTableMap();
 
