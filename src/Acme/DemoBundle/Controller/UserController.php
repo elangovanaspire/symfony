@@ -5,13 +5,15 @@ use Acme\DemoBundle\Model\User;
 use Acme\DemoBundle\Model\UserQuery;
 use Acme\DemoBundle\Form\Type\UserType;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use FOS\RestBundle\Controller\FOSRestController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 
-class UserController extends Controller
+class UserController extends FOSRestController
 {
      /**
      * @Rest\View
@@ -46,7 +48,7 @@ class UserController extends Controller
     
     public function newAction(Request $request)
     {
-        echo "==="; exit;
+       
         $user = new User();
         $form = $this->createForm(new UserType(), $user);
 
@@ -74,7 +76,6 @@ class UserController extends Controller
 
         $form = $this->createForm(new UserType(), $user);
         $form->handleRequest($this->getRequest());
-        var_dump($form); exit;
         if ($form->isValid()) {
             $user->save();
 

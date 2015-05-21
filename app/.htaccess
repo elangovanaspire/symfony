@@ -1,3 +1,4 @@
+DirectoryIndex app.php
 <IfModule mod_authz_core.c>
     Require all denied
 </IfModule>

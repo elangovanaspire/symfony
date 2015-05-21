@@ -12,7 +12,7 @@ _demo:
     prefix:   /demo
 
 acme_demo_user_new:
-    pattern:  /users/
+    pattern:  /users/new
     defaults: { _controller: AcmeDemoBundle:User:new, _format: ~ }
     requirements:
         _method: POST
@@ -30,9 +30,7 @@ acme_demo_user_get:
     requirements:
         _method: GET
         id: "\d+"
-        
-
-        
+                
 acme_demo_user_edit:
     pattern:  /users/{id}
     defaults: { _controller: AcmeDemoBundle:User:edit, _format: ~ }

@@ -13,12 +13,7 @@ class AuthorType extends AbstractType
     {
         $builder->add('first_name');
         $builder->add('last_name');
-        $builder->add('books', 'collection', array(
-            'type'          => new \Acme\LibraryBundle\Form\Type\BookType(),
-            'allow_add'     => true,
-            'allow_delete'  => true,
-            'by_reference'  => false,
-        ));
+        
     }
 
     public function setDefaultOptions(OptionsResolverInterface $resolver)
