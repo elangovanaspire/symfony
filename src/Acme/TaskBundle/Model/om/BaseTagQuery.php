@@ -13,37 +13,41 @@ use \PropelException;
 use \PropelObjectCollection;
 use \PropelPDO;
 use Acme\TaskBundle\Model\Tag;
+use Acme\TaskBundle\Model\TagPeer;
+use Acme\TaskBundle\Model\TagQuery;
 use Acme\TaskBundle\Model\Task;
-use Acme\TaskBundle\Model\TaskPeer;
-use Acme\TaskBundle\Model\TaskQuery;
 
 /**
- * @method TaskQuery orderById($order = Criteria::ASC) Order by the id column
- * @method TaskQuery orderByDescription($order = Criteria::ASC) Order by the description column
+ * @method TagQuery orderById($order = Criteria::ASC) Order by the id column
+ * @method TagQuery orderByTags($order = Criteria::ASC) Order by the tags column
+ * @method TagQuery orderByTaskId($order = Criteria::ASC) Order by the task_id column
  *
- * @method TaskQuery groupById() Group by the id column
- * @method TaskQuery groupByDescription() Group by the description column
+ * @method TagQuery groupById() Group by the id column
+ * @method TagQuery groupByTags() Group by the tags column
+ * @method TagQuery groupByTaskId() Group by the task_id column
  *
- * @method TaskQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
- * @method TaskQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
- * @method TaskQuery innerJoin($relation) Adds a INNER JOIN clause to the query
+ * @method TagQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
+ * @method TagQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
+ * @method TagQuery innerJoin($relation) Adds a INNER JOIN clause to the query
  *
- * @method TaskQuery leftJoinTag($relationAlias = null) Adds a LEFT JOIN clause to the query using the Tag relation
- * @method TaskQuery rightJoinTag($relationAlias = null) Adds a RIGHT JOIN clause to the query using the Tag relation
- * @method TaskQuery innerJoinTag($relationAlias = null) Adds a INNER JOIN clause to the query using the Tag relation
+ * @method TagQuery leftJoinTask($relationAlias = null) Adds a LEFT JOIN clause to the query using the Task relation
+ * @method TagQuery rightJoinTask($relationAlias = null) Adds a RIGHT JOIN clause to the query using the Task relation
+ * @method TagQuery innerJoinTask($relationAlias = null) Adds a INNER JOIN clause to the query using the Task relation
  *
- * @method Task findOne(PropelPDO $con = null) Return the first Task matching the query
- * @method Task findOneOrCreate(PropelPDO $con = null) Return the first Task matching the query, or a new Task object populated from the query conditions when no match is found
+ * @method Tag findOne(PropelPDO $con = null) Return the first Tag matching the query
+ * @method Tag findOneOrCreate(PropelPDO $con = null) Return the first Tag matching the query, or a new Tag object populated from the query conditions when no match is found
  *
- * @method Task findOneByDescription(string $description) Return the first Task filtered by the description column
+ * @method Tag findOneByTags(string $tags) Return the first Tag filtered by the tags column
+ * @method Tag findOneByTaskId(int $task_id) Return the first Tag filtered by the task_id column
  *
- * @method array findById(int $id) Return Task objects filtered by the id column
- * @method array findByDescription(string $description) Return Task objects filtered by the description column
+ * @method array findById(int $id) Return Tag objects filtered by the id column
+ * @method array findByTags(string $tags) Return Tag objects filtered by the tags column
+ * @method array findByTaskId(int $task_id) Return Tag objects filtered by the task_id column
  */
-abstract class BaseTaskQuery extends ModelCriteria
+abstract class BaseTagQuery extends ModelCriteria
 {
     /**
-     * Initializes internal state of BaseTaskQuery object.
+     * Initializes internal state of BaseTagQuery object.
      *
      * @param     string $dbName The dabase name
      * @param     string $modelName The phpName of a model, e.g. 'Book'
@@ -55,25 +59,25 @@ abstract class BaseTaskQuery extends ModelCriteria
             $dbName = 'default';
         }
         if (null === $modelName) {
-            $modelName = 'Acme\\TaskBundle\\Model\\Task';
+            $modelName = 'Acme\\TaskBundle\\Model\\Tag';
         }
         parent::__construct($dbName, $modelName, $modelAlias);
     }
 
     /**
-     * Returns a new TaskQuery object.
+     * Returns a new TagQuery object.
      *
      * @param     string $modelAlias The alias of a model in the query
-     * @param   TaskQuery|Criteria $criteria Optional Criteria to build the query from
+     * @param   TagQuery|Criteria $criteria Optional Criteria to build the query from
      *
-     * @return TaskQuery
+     * @return TagQuery
      */
     public static function create($modelAlias = null, $criteria = null)
     {
-        if ($criteria instanceof TaskQuery) {
+        if ($criteria instanceof TagQuery) {
             return $criteria;
         }
-        $query = new TaskQuery(null, null, $modelAlias);
+        $query = new TagQuery(null, null, $modelAlias);
 
         if ($criteria instanceof Criteria) {
             $query->mergeWith($criteria);
@@ -94,19 +98,19 @@ abstract class BaseTaskQuery extends ModelCriteria
      * @param mixed $key Primary key to use for the query
      * @param     PropelPDO $con an optional connection object
      *
-     * @return   Task|Task[]|mixed the result, formatted by the current formatter
+     * @return   Tag|Tag[]|mixed the result, formatted by the current formatter
      */
     public function findPk($key, $con = null)
     {
         if ($key === null) {
             return null;
         }
-        if ((null !== ($obj = TaskPeer::getInstanceFromPool((string) $key))) && !$this->formatter) {
+        if ((null !== ($obj = TagPeer::getInstanceFromPool((string) $key))) && !$this->formatter) {
             // the object is already in the instance pool
             return $obj;
         }
         if ($con === null) {
-            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_READ);
+            $con = Propel::getConnection(TagPeer::DATABASE_NAME, Propel::CONNECTION_READ);
         }
         $this->basePreSelect($con);
         if ($this->formatter || $this->modelAlias || $this->with || $this->select
@@ -124,7 +128,7 @@ abstract class BaseTaskQuery extends ModelCriteria
      * @param     mixed $key Primary key to use for the query
      * @param     PropelPDO $con A connection object
      *
-     * @return                 Task A model object, or null if the key is not found
+     * @return                 Tag A model object, or null if the key is not found
      * @throws PropelException
      */
      public function findOneById($key, $con = null)
@@ -139,12 +143,12 @@ abstract class BaseTaskQuery extends ModelCriteria
      * @param     mixed $key Primary key to use for the query
      * @param     PropelPDO $con A connection object
      *
-     * @return                 Task A model object, or null if the key is not found
+     * @return                 Tag A model object, or null if the key is not found
      * @throws PropelException
      */
     protected function findPkSimple($key, $con)
     {
-        $sql = 'SELECT `id`, `description` FROM `task` WHERE `id` = :p0';
+        $sql = 'SELECT `id`, `tags`, `task_id` FROM `tag` WHERE `id` = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -155,9 +159,9 @@ abstract class BaseTaskQuery extends ModelCriteria
         }
         $obj = null;
         if ($row = $stmt->fetch(PDO::FETCH_NUM)) {
-            $obj = new Task();
+            $obj = new Tag();
             $obj->hydrate($row);
-            TaskPeer::addInstanceToPool($obj, (string) $key);
+            TagPeer::addInstanceToPool($obj, (string) $key);
         }
         $stmt->closeCursor();
 
@@ -170,7 +174,7 @@ abstract class BaseTaskQuery extends ModelCriteria
      * @param     mixed $key Primary key to use for the query
      * @param     PropelPDO $con A connection object
      *
-     * @return Task|Task[]|mixed the result, formatted by the current formatter
+     * @return Tag|Tag[]|mixed the result, formatted by the current formatter
      */
     protected function findPkComplex($key, $con)
     {
@@ -191,7 +195,7 @@ abstract class BaseTaskQuery extends ModelCriteria
      * @param     array $keys Primary keys to use for the query
      * @param     PropelPDO $con an optional connection object
      *
-     * @return PropelObjectCollection|Task[]|mixed the list of results, formatted by the current formatter
+     * @return PropelObjectCollection|Tag[]|mixed the list of results, formatted by the current formatter
      */
     public function findPks($keys, $con = null)
     {
@@ -212,12 +216,12 @@ abstract class BaseTaskQuery extends ModelCriteria
      *
      * @param     mixed $key Primary key to use for the query
      *
-     * @return TaskQuery The current query, for fluid interface
+     * @return TagQuery The current query, for fluid interface
      */
     public function filterByPrimaryKey($key)
     {
 
-        return $this->addUsingAlias(TaskPeer::ID, $key, Criteria::EQUAL);
+        return $this->addUsingAlias(TagPeer::ID, $key, Criteria::EQUAL);
     }
 
     /**
@@ -225,12 +229,12 @@ abstract class BaseTaskQuery extends ModelCriteria
      *
      * @param     array $keys The list of primary key to use for the query
      *
-     * @return TaskQuery The current query, for fluid interface
+     * @return TagQuery The current query, for fluid interface
      */
     public function filterByPrimaryKeys($keys)
     {
 
-        return $this->addUsingAlias(TaskPeer::ID, $keys, Criteria::IN);
+        return $this->addUsingAlias(TagPeer::ID, $keys, Criteria::IN);
     }
 
     /**
@@ -250,18 +254,18 @@ abstract class BaseTaskQuery extends ModelCriteria
      *              Use associative array('min' => $minValue, 'max' => $maxValue) for intervals.
      * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
      *
-     * @return TaskQuery The current query, for fluid interface
+     * @return TagQuery The current query, for fluid interface
      */
     public function filterById($id = null, $comparison = null)
     {
         if (is_array($id)) {
             $useMinMax = false;
             if (isset($id['min'])) {
-                $this->addUsingAlias(TaskPeer::ID, $id['min'], Criteria::GREATER_EQUAL);
+                $this->addUsingAlias(TagPeer::ID, $id['min'], Criteria::GREATER_EQUAL);
                 $useMinMax = true;
             }
             if (isset($id['max'])) {
-                $this->addUsingAlias(TaskPeer::ID, $id['max'], Criteria::LESS_EQUAL);
+                $this->addUsingAlias(TagPeer::ID, $id['max'], Criteria::LESS_EQUAL);
                 $useMinMax = true;
             }
             if ($useMinMax) {
@@ -272,74 +276,120 @@ abstract class BaseTaskQuery extends ModelCriteria
             }
         }
 
-        return $this->addUsingAlias(TaskPeer::ID, $id, $comparison);
+        return $this->addUsingAlias(TagPeer::ID, $id, $comparison);
     }
 
     /**
-     * Filter the query on the description column
+     * Filter the query on the tags column
      *
      * Example usage:
      * <code>
-     * $query->filterByDescription('fooValue');   // WHERE description = 'fooValue'
-     * $query->filterByDescription('%fooValue%'); // WHERE description LIKE '%fooValue%'
+     * $query->filterByTags('fooValue');   // WHERE tags = 'fooValue'
+     * $query->filterByTags('%fooValue%'); // WHERE tags LIKE '%fooValue%'
      * </code>
      *
-     * @param     string $description The value to use as filter.
+     * @param     string $tags The value to use as filter.
      *              Accepts wildcards (* and % trigger a LIKE)
      * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
      *
-     * @return TaskQuery The current query, for fluid interface
+     * @return TagQuery The current query, for fluid interface
      */
-    public function filterByDescription($description = null, $comparison = null)
+    public function filterByTags($tags = null, $comparison = null)
     {
         if (null === $comparison) {
-            if (is_array($description)) {
+            if (is_array($tags)) {
                 $comparison = Criteria::IN;
-            } elseif (preg_match('/[\%\*]/', $description)) {
-                $description = str_replace('*', '%', $description);
+            } elseif (preg_match('/[\%\*]/', $tags)) {
+                $tags = str_replace('*', '%', $tags);
                 $comparison = Criteria::LIKE;
             }
         }
 
-        return $this->addUsingAlias(TaskPeer::DESCRIPTION, $description, $comparison);
+        return $this->addUsingAlias(TagPeer::TAGS, $tags, $comparison);
     }
 
     /**
-     * Filter the query by a related Tag object
+     * Filter the query on the task_id column
      *
-     * @param   Tag|PropelObjectCollection $tag  the related object to use as filter
+     * Example usage:
+     * <code>
+     * $query->filterByTaskId(1234); // WHERE task_id = 1234
+     * $query->filterByTaskId(array(12, 34)); // WHERE task_id IN (12, 34)
+     * $query->filterByTaskId(array('min' => 12)); // WHERE task_id >= 12
+     * $query->filterByTaskId(array('max' => 12)); // WHERE task_id <= 12
+     * </code>
+     *
+     * @see       filterByTask()
+     *
+     * @param     mixed $taskId The value to use as filter.
+     *              Use scalar values for equality.
+     *              Use array values for in_array() equivalent.
+     *              Use associative array('min' => $minValue, 'max' => $maxValue) for intervals.
      * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
      *
-     * @return                 TaskQuery The current query, for fluid interface
+     * @return TagQuery The current query, for fluid interface
+     */
+    public function filterByTaskId($taskId = null, $comparison = null)
+    {
+        if (is_array($taskId)) {
+            $useMinMax = false;
+            if (isset($taskId['min'])) {
+                $this->addUsingAlias(TagPeer::TASK_ID, $taskId['min'], Criteria::GREATER_EQUAL);
+                $useMinMax = true;
+            }
+            if (isset($taskId['max'])) {
+                $this->addUsingAlias(TagPeer::TASK_ID, $taskId['max'], Criteria::LESS_EQUAL);
+                $useMinMax = true;
+            }
+            if ($useMinMax) {
+                return $this;
+            }
+            if (null === $comparison) {
+                $comparison = Criteria::IN;
+            }
+        }
+
+        return $this->addUsingAlias(TagPeer::TASK_ID, $taskId, $comparison);
+    }
+
+    /**
+     * Filter the query by a related Task object
+     *
+     * @param   Task|PropelObjectCollection $task The related object(s) to use as filter
+     * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @return                 TagQuery The current query, for fluid interface
      * @throws PropelException - if the provided filter is invalid.
      */
-    public function filterByTag($tag, $comparison = null)
+    public function filterByTask($task, $comparison = null)
     {
-        if ($tag instanceof Tag) {
+        if ($task instanceof Task) {
             return $this
-                ->addUsingAlias(TaskPeer::ID, $tag->getTaskId(), $comparison);
-        } elseif ($tag instanceof PropelObjectCollection) {
+                ->addUsingAlias(TagPeer::TASK_ID, $task->getId(), $comparison);
+        } elseif ($task instanceof PropelObjectCollection) {
+            if (null === $comparison) {
+                $comparison = Criteria::IN;
+            }
+
             return $this
-                ->useTagQuery()
-                ->filterByPrimaryKeys($tag->getPrimaryKeys())
-                ->endUse();
+                ->addUsingAlias(TagPeer::TASK_ID, $task->toKeyValue('PrimaryKey', 'Id'), $comparison);
         } else {
-            throw new PropelException('filterByTag() only accepts arguments of type Tag or PropelCollection');
+            throw new PropelException('filterByTask() only accepts arguments of type Task or PropelCollection');
         }
     }
 
     /**
-     * Adds a JOIN clause to the query using the Tag relation
+     * Adds a JOIN clause to the query using the Task relation
      *
      * @param     string $relationAlias optional alias for the relation
      * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
      *
-     * @return TaskQuery The current query, for fluid interface
+     * @return TagQuery The current query, for fluid interface
      */
-    public function joinTag($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+    public function joinTask($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
     {
         $tableMap = $this->getTableMap();
-        $relationMap = $tableMap->getRelation('Tag');
+        $relationMap = $tableMap->getRelation('Task');
 
         // create a ModelJoin object for this join
         $join = new ModelJoin();
@@ -354,14 +404,14 @@ abstract class BaseTaskQuery extends ModelCriteria
             $this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
             $this->addJoinObject($join, $relationAlias);
         } else {
-            $this->addJoinObject($join, 'Tag');
+            $this->addJoinObject($join, 'Task');
         }
 
         return $this;
     }
 
     /**
-     * Use the Tag relation Tag object
+     * Use the Task relation Task object
      *
      * @see       useQuery()
      *
@@ -369,26 +419,26 @@ abstract class BaseTaskQuery extends ModelCriteria
      *                                   to be used as main alias in the secondary query
      * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
      *
-     * @return   \Acme\TaskBundle\Model\TagQuery A secondary query class using the current class as primary query
+     * @return   \Acme\TaskBundle\Model\TaskQuery A secondary query class using the current class as primary query
      */
-    public function useTagQuery($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+    public function useTaskQuery($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
     {
         return $this
-            ->joinTag($relationAlias, $joinType)
-            ->useQuery($relationAlias ? $relationAlias : 'Tag', '\Acme\TaskBundle\Model\TagQuery');
+            ->joinTask($relationAlias, $joinType)
+            ->useQuery($relationAlias ? $relationAlias : 'Task', '\Acme\TaskBundle\Model\TaskQuery');
     }
 
     /**
      * Exclude object from result
      *
-     * @param   Task $task Object to remove from the list of results
+     * @param   Tag $tag Object to remove from the list of results
      *
-     * @return TaskQuery The current query, for fluid interface
+     * @return TagQuery The current query, for fluid interface
      */
-    public function prune($task = null)
+    public function prune($tag = null)
     {
-        if ($task) {
-            $this->addUsingAlias(TaskPeer::ID, $task->getId(), Criteria::NOT_EQUAL);
+        if ($tag) {
+            $this->addUsingAlias(TagPeer::ID, $tag->getId(), Criteria::NOT_EQUAL);
         }
 
         return $this;

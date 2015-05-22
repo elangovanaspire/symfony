@@ -9,28 +9,26 @@ use \Exception;
 use \PDO;
 use \Persistent;
 use \Propel;
-use \PropelCollection;
 use \PropelException;
-use \PropelObjectCollection;
 use \PropelPDO;
 use Acme\TaskBundle\Model\Tag;
+use Acme\TaskBundle\Model\TagPeer;
 use Acme\TaskBundle\Model\TagQuery;
 use Acme\TaskBundle\Model\Task;
-use Acme\TaskBundle\Model\TaskPeer;
 use Acme\TaskBundle\Model\TaskQuery;
 
-abstract class BaseTask extends BaseObject implements Persistent
+abstract class BaseTag extends BaseObject implements Persistent
 {
     /**
      * Peer class name
      */
-    const PEER = 'Acme\\TaskBundle\\Model\\TaskPeer';
+    const PEER = 'Acme\\TaskBundle\\Model\\TagPeer';
 
     /**
      * The Peer class.
      * Instance provides a convenient way of calling static methods on a class
      * that calling code may not be able to identify.
-     * @var        TaskPeer
+     * @var        TagPeer
      */
     protected static $peer;
 
@@ -47,16 +45,21 @@ abstract class BaseTask extends BaseObject implements Persistent
     protected $id;
 
     /**
-     * The value for the description field.
+     * The value for the tags field.
      * @var        string
      */
-    protected $description;
+    protected $tags;
 
     /**
-     * @var        PropelObjectCollection|Tag[] Collection to store aggregation of Tag objects.
+     * The value for the task_id field.
+     * @var        int
      */
-    protected $collTags;
-    protected $collTagsPartial;
+    protected $task_id;
+
+    /**
+     * @var        Task
+     */
+    protected $aTask;
 
     /**
      * Flag to prevent endless save loop, if this object is referenced
@@ -79,12 +82,6 @@ abstract class BaseTask extends BaseObject implements Persistent
     protected $alreadyInClearAllReferencesDeep = false;
 
     /**
-     * An array of objects scheduled for deletion.
-     * @var		PropelObjectCollection
-     */
-    protected $tagsScheduledForDeletion = null;
-
-    /**
      * Get the [id] column value.
      *
      * @return int
@@ -96,21 +93,32 @@ abstract class BaseTask extends BaseObject implements Persistent
     }
 
     /**
-     * Get the [description] column value.
+     * Get the [tags] column value.
      *
      * @return string
      */
-    public function getDescription()
+    public function getTags()
     {
 
-        return $this->description;
+        return $this->tags;
+    }
+
+    /**
+     * Get the [task_id] column value.
+     *
+     * @return int
+     */
+    public function getTaskId()
+    {
+
+        return $this->task_id;
     }
 
     /**
      * Set the value of [id] column.
      *
      * @param  int $v new value
-     * @return Task The current object (for fluent API support)
+     * @return Tag The current object (for fluent API support)
      */
     public function setId($v)
     {
@@ -120,7 +128,7 @@ abstract class BaseTask extends BaseObject implements Persistent
 
         if ($this->id !== $v) {
             $this->id = $v;
-            $this->modifiedColumns[] = TaskPeer::ID;
+            $this->modifiedColumns[] = TagPeer::ID;
         }
 
 
@@ -128,25 +136,50 @@ abstract class BaseTask extends BaseObject implements Persistent
     } // setId()
 
     /**
-     * Set the value of [description] column.
+     * Set the value of [tags] column.
      *
      * @param  string $v new value
-     * @return Task The current object (for fluent API support)
+     * @return Tag The current object (for fluent API support)
      */
-    public function setDescription($v)
+    public function setTags($v)
     {
         if ($v !== null) {
             $v = (string) $v;
         }
 
-        if ($this->description !== $v) {
-            $this->description = $v;
-            $this->modifiedColumns[] = TaskPeer::DESCRIPTION;
+        if ($this->tags !== $v) {
+            $this->tags = $v;
+            $this->modifiedColumns[] = TagPeer::TAGS;
         }
 
 
         return $this;
-    } // setDescription()
+    } // setTags()
+
+    /**
+     * Set the value of [task_id] column.
+     *
+     * @param  int $v new value
+     * @return Tag The current object (for fluent API support)
+     */
+    public function setTaskId($v)
+    {
+        if ($v !== null && is_numeric($v)) {
+            $v = (int) $v;
+        }
+
+        if ($this->task_id !== $v) {
+            $this->task_id = $v;
+            $this->modifiedColumns[] = TagPeer::TASK_ID;
+        }
+
+        if ($this->aTask !== null && $this->aTask->getId() !== $v) {
+            $this->aTask = null;
+        }
+
+
+        return $this;
+    } // setTaskId()
 
     /**
      * Indicates whether the columns in this object are only set to default values.
@@ -181,7 +214,8 @@ abstract class BaseTask extends BaseObject implements Persistent
         try {
 
             $this->id = ($row[$startcol + 0] !== null) ? (int) $row[$startcol + 0] : null;
-            $this->description = ($row[$startcol + 1] !== null) ? (string) $row[$startcol + 1] : null;
+            $this->tags = ($row[$startcol + 1] !== null) ? (string) $row[$startcol + 1] : null;
+            $this->task_id = ($row[$startcol + 2] !== null) ? (int) $row[$startcol + 2] : null;
             $this->resetModified();
 
             $this->setNew(false);
@@ -191,10 +225,10 @@ abstract class BaseTask extends BaseObject implements Persistent
             }
             $this->postHydrate($row, $startcol, $rehydrate);
 
-            return $startcol + 2; // 2 = TaskPeer::NUM_HYDRATE_COLUMNS.
+            return $startcol + 3; // 3 = TagPeer::NUM_HYDRATE_COLUMNS.
 
         } catch (Exception $e) {
-            throw new PropelException("Error populating Task object", $e);
+            throw new PropelException("Error populating Tag object", $e);
         }
     }
 
@@ -214,6 +248,9 @@ abstract class BaseTask extends BaseObject implements Persistent
     public function ensureConsistency()
     {
 
+        if ($this->aTask !== null && $this->task_id !== $this->aTask->getId()) {
+            $this->aTask = null;
+        }
     } // ensureConsistency
 
     /**
@@ -237,13 +274,13 @@ abstract class BaseTask extends BaseObject implements Persistent
         }
 
         if ($con === null) {
-            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_READ);
+            $con = Propel::getConnection(TagPeer::DATABASE_NAME, Propel::CONNECTION_READ);
         }
 
         // We don't need to alter the object instance pool; we're just modifying this instance
         // already in the pool.
 
-        $stmt = TaskPeer::doSelectStmt($this->buildPkeyCriteria(), $con);
+        $stmt = TagPeer::doSelectStmt($this->buildPkeyCriteria(), $con);
         $row = $stmt->fetch(PDO::FETCH_NUM);
         $stmt->closeCursor();
         if (!$row) {
@@ -253,8 +290,7 @@ abstract class BaseTask extends BaseObject implements Persistent
 
         if ($deep) {  // also de-associate any related objects?
 
-            $this->collTags = null;
-
+            $this->aTask = null;
         } // if (deep)
     }
 
@@ -275,12 +311,12 @@ abstract class BaseTask extends BaseObject implements Persistent
         }
 
         if ($con === null) {
-            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
+            $con = Propel::getConnection(TagPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
         }
 
         $con->beginTransaction();
         try {
-            $deleteQuery = TaskQuery::create()
+            $deleteQuery = TagQuery::create()
                 ->filterByPrimaryKey($this->getPrimaryKey());
             $ret = $this->preDelete($con);
             if ($ret) {
@@ -318,7 +354,7 @@ abstract class BaseTask extends BaseObject implements Persistent
         }
 
         if ($con === null) {
-            $con = Propel::getConnection(TaskPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
+            $con = Propel::getConnection(TagPeer::DATABASE_NAME, Propel::CONNECTION_WRITE);
         }
 
         $con->beginTransaction();
@@ -338,7 +374,7 @@ abstract class BaseTask extends BaseObject implements Persistent
                     $this->postUpdate($con);
                 }
                 $this->postSave($con);
-                TaskPeer::addInstanceToPool($this);
+                TagPeer::addInstanceToPool($this);
             } else {
                 $affectedRows = 0;
             }
@@ -368,6 +404,18 @@ abstract class BaseTask extends BaseObject implements Persistent
         if (!$this->alreadyInSave) {
             $this->alreadyInSave = true;
 
+            // We call the save method on the following object(s) if they
+            // were passed to this object by their corresponding set
+            // method.  This object relates to these object(s) by a
+            // foreign key reference.
+
+            if ($this->aTask !== null) {
+                if ($this->aTask->isModified() || $this->aTask->isNew()) {
+                    $affectedRows += $this->aTask->save($con);
+                }
+                $this->setTask($this->aTask);
+            }
+
             if ($this->isNew() || $this->isModified()) {
                 // persist changes
                 if ($this->isNew()) {
@@ -377,24 +425,6 @@ abstract class BaseTask extends BaseObject implements Persistent
                 }
                 $affectedRows += 1;
                 $this->resetModified();
-            }
-
-            if ($this->tagsScheduledForDeletion !== null) {
-                if (!$this->tagsScheduledForDeletion->isEmpty()) {
-                    foreach ($this->tagsScheduledForDeletion as $tag) {
-                        // need to save related object because we set the relation to null
-                        $tag->save($con);
-                    }
-                    $this->tagsScheduledForDeletion = null;
-                }
-            }
-
-            if ($this->collTags !== null) {
-                foreach ($this->collTags as $referrerFK) {
-                    if (!$referrerFK->isDeleted() && ($referrerFK->isNew() || $referrerFK->isModified())) {
-                        $affectedRows += $referrerFK->save($con);
-                    }
-                }
             }
 
             $this->alreadyInSave = false;
@@ -417,21 +447,24 @@ abstract class BaseTask extends BaseObject implements Persistent
         $modifiedColumns = array();
         $index = 0;
 
-        $this->modifiedColumns[] = TaskPeer::ID;
+        $this->modifiedColumns[] = TagPeer::ID;
         if (null !== $this->id) {
-            throw new PropelException('Cannot insert a value for auto-increment primary key (' . TaskPeer::ID . ')');
+            throw new PropelException('Cannot insert a value for auto-increment primary key (' . TagPeer::ID . ')');
         }
 
          // check the columns in natural order for more readable SQL queries
-        if ($this->isColumnModified(TaskPeer::ID)) {
+        if ($this->isColumnModified(TagPeer::ID)) {
             $modifiedColumns[':p' . $index++]  = '`id`';
         }
-        if ($this->isColumnModified(TaskPeer::DESCRIPTION)) {
-            $modifiedColumns[':p' . $index++]  = '`description`';
+        if ($this->isColumnModified(TagPeer::TAGS)) {
+            $modifiedColumns[':p' . $index++]  = '`tags`';
+        }
+        if ($this->isColumnModified(TagPeer::TASK_ID)) {
+            $modifiedColumns[':p' . $index++]  = '`task_id`';
         }
 
         $sql = sprintf(
-            'INSERT INTO `task` (%s) VALUES (%s)',
+            'INSERT INTO `tag` (%s) VALUES (%s)',
             implode(', ', $modifiedColumns),
             implode(', ', array_keys($modifiedColumns))
         );
@@ -443,8 +476,11 @@ abstract class BaseTask extends BaseObject implements Persistent
                     case '`id`':
                         $stmt->bindValue($identifier, $this->id, PDO::PARAM_INT);
                         break;
-                    case '`description`':
-                        $stmt->bindValue($identifier, $this->description, PDO::PARAM_STR);
+                    case '`tags`':
+                        $stmt->bindValue($identifier, $this->tags, PDO::PARAM_STR);
+                        break;
+                    case '`task_id`':
+                        $stmt->bindValue($identifier, $this->task_id, PDO::PARAM_INT);
                         break;
                 }
             }
@@ -540,18 +576,22 @@ abstract class BaseTask extends BaseObject implements Persistent
             $failureMap = array();
 
 
-            if (($retval = TaskPeer::doValidate($this, $columns)) !== true) {
-                $failureMap = array_merge($failureMap, $retval);
+            // We call the validate method on the following object(s) if they
+            // were passed to this object by their corresponding set
+            // method.  This object relates to these object(s) by a
+            // foreign key reference.
+
+            if ($this->aTask !== null) {
+                if (!$this->aTask->validate($columns)) {
+                    $failureMap = array_merge($failureMap, $this->aTask->getValidationFailures());
+                }
             }
 
 
-                if ($this->collTags !== null) {
-                    foreach ($this->collTags as $referrerFK) {
-                        if (!$referrerFK->validate($columns)) {
-                            $failureMap = array_merge($failureMap, $referrerFK->getValidationFailures());
-                        }
-                    }
-                }
+            if (($retval = TagPeer::doValidate($this, $columns)) !== true) {
+                $failureMap = array_merge($failureMap, $retval);
+            }
+
 
 
             $this->alreadyInValidation = false;
@@ -572,7 +612,7 @@ abstract class BaseTask extends BaseObject implements Persistent
      */
     public function getByName($name, $type = BasePeer::TYPE_PHPNAME)
     {
-        $pos = TaskPeer::translateFieldName($name, $type, BasePeer::TYPE_NUM);
+        $pos = TagPeer::translateFieldName($name, $type, BasePeer::TYPE_NUM);
         $field = $this->getByPosition($pos);
 
         return $field;
@@ -592,7 +632,10 @@ abstract class BaseTask extends BaseObject implements Persistent
                 return $this->getId();
                 break;
             case 1:
-                return $this->getDescription();
+                return $this->getTags();
+                break;
+            case 2:
+                return $this->getTaskId();
                 break;
             default:
                 return null;
@@ -617,14 +660,15 @@ abstract class BaseTask extends BaseObject implements Persistent
      */
     public function toArray($keyType = BasePeer::TYPE_PHPNAME, $includeLazyLoadColumns = true, $alreadyDumpedObjects = array(), $includeForeignObjects = false)
     {
-        if (isset($alreadyDumpedObjects['Task'][$this->getPrimaryKey()])) {
+        if (isset($alreadyDumpedObjects['Tag'][$this->getPrimaryKey()])) {
             return '*RECURSION*';
         }
-        $alreadyDumpedObjects['Task'][$this->getPrimaryKey()] = true;
-        $keys = TaskPeer::getFieldNames($keyType);
+        $alreadyDumpedObjects['Tag'][$this->getPrimaryKey()] = true;
+        $keys = TagPeer::getFieldNames($keyType);
         $result = array(
             $keys[0] => $this->getId(),
-            $keys[1] => $this->getDescription(),
+            $keys[1] => $this->getTags(),
+            $keys[2] => $this->getTaskId(),
         );
         $virtualColumns = $this->virtualColumns;
         foreach ($virtualColumns as $key => $virtualColumn) {
@@ -632,8 +676,8 @@ abstract class BaseTask extends BaseObject implements Persistent
         }
 
         if ($includeForeignObjects) {
-            if (null !== $this->collTags) {
-                $result['Tags'] = $this->collTags->toArray(null, true, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
+            if (null !== $this->aTask) {
+                $result['Task'] = $this->aTask->toArray($keyType, $includeLazyLoadColumns,  $alreadyDumpedObjects, true);
             }
         }
 
@@ -653,7 +697,7 @@ abstract class BaseTask extends BaseObject implements Persistent
      */
     public function setByName($name, $value, $type = BasePeer::TYPE_PHPNAME)
     {
-        $pos = TaskPeer::translateFieldName($name, $type, BasePeer::TYPE_NUM);
+        $pos = TagPeer::translateFieldName($name, $type, BasePeer::TYPE_NUM);
 
         $this->setByPosition($pos, $value);
     }
@@ -673,7 +717,10 @@ abstract class BaseTask extends BaseObject implements Persistent
                 $this->setId($value);
                 break;
             case 1:
-                $this->setDescription($value);
+                $this->setTags($value);
+                break;
+            case 2:
+                $this->setTaskId($value);
                 break;
         } // switch()
     }
@@ -697,10 +744,11 @@ abstract class BaseTask extends BaseObject implements Persistent
      */
     public function fromArray($arr, $keyType = BasePeer::TYPE_PHPNAME)
     {
-        $keys = TaskPeer::getFieldNames($keyType);
+        $keys = TagPeer::getFieldNames($keyType);
 
         if (array_key_exists($keys[0], $arr)) $this->setId($arr[$keys[0]]);
-        if (array_key_exists($keys[1], $arr)) $this->setDescription($arr[$keys[1]]);
+        if (array_key_exists($keys[1], $arr)) $this->setTags($arr[$keys[1]]);
+        if (array_key_exists($keys[2], $arr)) $this->setTaskId($arr[$keys[2]]);
     }
 
     /**
@@ -710,10 +758,11 @@ abstract class BaseTask extends BaseObject implements Persistent
      */
     public function buildCriteria()
     {
-        $criteria = new Criteria(TaskPeer::DATABASE_NAME);
+        $criteria = new Criteria(TagPeer::DATABASE_NAME);
 
-        if ($this->isColumnModified(TaskPeer::ID)) $criteria->add(TaskPeer::ID, $this->id);
-        if ($this->isColumnModified(TaskPeer::DESCRIPTION)) $criteria->add(TaskPeer::DESCRIPTION, $this->description);
+        if ($this->isColumnModified(TagPeer::ID)) $criteria->add(TagPeer::ID, $this->id);
+        if ($this->isColumnModified(TagPeer::TAGS)) $criteria->add(TagPeer::TAGS, $this->tags);
+        if ($this->isColumnModified(TagPeer::TASK_ID)) $criteria->add(TagPeer::TASK_ID, $this->task_id);
 
         return $criteria;
     }
@@ -728,8 +777,8 @@ abstract class BaseTask extends BaseObject implements Persistent
      */
     public function buildPkeyCriteria()
     {
-        $criteria = new Criteria(TaskPeer::DATABASE_NAME);
-        $criteria->add(TaskPeer::ID, $this->id);
+        $criteria = new Criteria(TagPeer::DATABASE_NAME);
+        $criteria->add(TagPeer::ID, $this->id);
 
         return $criteria;
     }
@@ -770,14 +819,15 @@ abstract class BaseTask extends BaseObject implements Persistent
      * If desired, this method can also make copies of all associated (fkey referrers)
      * objects.
      *
-     * @param object $copyObj An object of Task (or compatible) type.
+     * @param object $copyObj An object of Tag (or compatible) type.
      * @param boolean $deepCopy Whether to also copy all rows that refer (by fkey) to the current row.
      * @param boolean $makeNew Whether to reset autoincrement PKs and make the object new.
      * @throws PropelException
      */
     public function copyInto($copyObj, $deepCopy = false, $makeNew = true)
     {
-        $copyObj->setDescription($this->getDescription());
+        $copyObj->setTags($this->getTags());
+        $copyObj->setTaskId($this->getTaskId());
 
         if ($deepCopy && !$this->startCopy) {
             // important: temporarily setNew(false) because this affects the behavior of
@@ -785,12 +835,6 @@ abstract class BaseTask extends BaseObject implements Persistent
             $copyObj->setNew(false);
             // store object hash to prevent cycle
             $this->startCopy = true;
-
-            foreach ($this->getTags() as $relObj) {
-                if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
-                    $copyObj->addTag($relObj->copy($deepCopy));
-                }
-            }
 
             //unflag object copy
             $this->startCopy = false;
@@ -811,7 +855,7 @@ abstract class BaseTask extends BaseObject implements Persistent
      * objects.
      *
      * @param boolean $deepCopy Whether to also copy all rows that refer (by fkey) to the current row.
-     * @return Task Clone of current object.
+     * @return Tag Clone of current object.
      * @throws PropelException
      */
     public function copy($deepCopy = false)
@@ -831,256 +875,67 @@ abstract class BaseTask extends BaseObject implements Persistent
      * same instance for all member of this class. The method could therefore
      * be static, but this would prevent one from overriding the behavior.
      *
-     * @return TaskPeer
+     * @return TagPeer
      */
     public function getPeer()
     {
         if (self::$peer === null) {
-            self::$peer = new TaskPeer();
+            self::$peer = new TagPeer();
         }
 
         return self::$peer;
     }
 
-
     /**
-     * Initializes a collection based on the name of a relation.
-     * Avoids crafting an 'init[$relationName]s' method name
-     * that wouldn't work when StandardEnglishPluralizer is used.
+     * Declares an association between this object and a Task object.
      *
-     * @param string $relationName The name of the relation to initialize
-     * @return void
-     */
-    public function initRelation($relationName)
-    {
-        if ('Tag' == $relationName) {
-            $this->initTags();
-        }
-    }
-
-    /**
-     * Clears out the collTags collection
-     *
-     * This does not modify the database; however, it will remove any associated objects, causing
-     * them to be refetched by subsequent calls to accessor method.
-     *
-     * @return Task The current object (for fluent API support)
-     * @see        addTags()
-     */
-    public function clearTags()
-    {
-        $this->collTags = null; // important to set this to null since that means it is uninitialized
-        $this->collTagsPartial = null;
-
-        return $this;
-    }
-
-    /**
-     * reset is the collTags collection loaded partially
-     *
-     * @return void
-     */
-    public function resetPartialTags($v = true)
-    {
-        $this->collTagsPartial = $v;
-    }
-
-    /**
-     * Initializes the collTags collection.
-     *
-     * By default this just sets the collTags collection to an empty array (like clearcollTags());
-     * however, you may wish to override this method in your stub class to provide setting appropriate
-     * to your application -- for example, setting the initial array to the values stored in database.
-     *
-     * @param boolean $overrideExisting If set to true, the method call initializes
-     *                                        the collection even if it is not empty
-     *
-     * @return void
-     */
-    public function initTags($overrideExisting = true)
-    {
-        if (null !== $this->collTags && !$overrideExisting) {
-            return;
-        }
-        $this->collTags = new PropelObjectCollection();
-        $this->collTags->setModel('Tag');
-    }
-
-    /**
-     * Gets an array of Tag objects which contain a foreign key that references this object.
-     *
-     * If the $criteria is not null, it is used to always fetch the results from the database.
-     * Otherwise the results are fetched from the database the first time, then cached.
-     * Next time the same method is called without $criteria, the cached collection is returned.
-     * If this Task is new, it will return
-     * an empty collection or the current collection; the criteria is ignored on a new object.
-     *
-     * @param Criteria $criteria optional Criteria object to narrow the query
-     * @param PropelPDO $con optional connection object
-     * @return PropelObjectCollection|Tag[] List of Tag objects
+     * @param                  Task $v
+     * @return Tag The current object (for fluent API support)
      * @throws PropelException
      */
-    public function getTags($criteria = null, PropelPDO $con = null)
+    public function setTask(Task $v = null)
     {
-        $partial = $this->collTagsPartial && !$this->isNew();
-        if (null === $this->collTags || null !== $criteria  || $partial) {
-            if ($this->isNew() && null === $this->collTags) {
-                // return empty collection
-                $this->initTags();
-            } else {
-                $collTags = TagQuery::create(null, $criteria)
-                    ->filterByTask($this)
-                    ->find($con);
-                if (null !== $criteria) {
-                    if (false !== $this->collTagsPartial && count($collTags)) {
-                      $this->initTags(false);
-
-                      foreach ($collTags as $obj) {
-                        if (false == $this->collTags->contains($obj)) {
-                          $this->collTags->append($obj);
-                        }
-                      }
-
-                      $this->collTagsPartial = true;
-                    }
-
-                    $collTags->getInternalIterator()->rewind();
-
-                    return $collTags;
-                }
-
-                if ($partial && $this->collTags) {
-                    foreach ($this->collTags as $obj) {
-                        if ($obj->isNew()) {
-                            $collTags[] = $obj;
-                        }
-                    }
-                }
-
-                $this->collTags = $collTags;
-                $this->collTagsPartial = false;
-            }
+        if ($v === null) {
+            $this->setTaskId(NULL);
+        } else {
+            $this->setTaskId($v->getId());
         }
 
-        return $this->collTags;
-    }
+        $this->aTask = $v;
 
-    /**
-     * Sets a collection of Tag objects related by a one-to-many relationship
-     * to the current object.
-     * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
-     * and new objects from the given Propel collection.
-     *
-     * @param PropelCollection $tags A Propel collection.
-     * @param PropelPDO $con Optional connection object
-     * @return Task The current object (for fluent API support)
-     */
-    public function setTags(PropelCollection $tags, PropelPDO $con = null)
-    {
-        $tagsToDelete = $this->getTags(new Criteria(), $con)->diff($tags);
-
-
-        $this->tagsScheduledForDeletion = $tagsToDelete;
-
-        foreach ($tagsToDelete as $tagRemoved) {
-            $tagRemoved->setTask(null);
+        // Add binding for other direction of this n:n relationship.
+        // If this object has already been added to the Task object, it will not be re-added.
+        if ($v !== null) {
+            $v->addTag($this);
         }
 
-        $this->collTags = null;
-        foreach ($tags as $tag) {
-            $this->addTag($tag);
-        }
-
-        $this->collTags = $tags;
-        $this->collTagsPartial = false;
 
         return $this;
     }
 
+
     /**
-     * Returns the number of related Tag objects.
+     * Get the associated Task object
      *
-     * @param Criteria $criteria
-     * @param boolean $distinct
-     * @param PropelPDO $con
-     * @return int             Count of related Tag objects.
+     * @param PropelPDO $con Optional Connection object.
+     * @param $doQuery Executes a query to get the object if required
+     * @return Task The associated Task object.
      * @throws PropelException
      */
-    public function countTags(Criteria $criteria = null, $distinct = false, PropelPDO $con = null)
+    public function getTask(PropelPDO $con = null, $doQuery = true)
     {
-        $partial = $this->collTagsPartial && !$this->isNew();
-        if (null === $this->collTags || null !== $criteria || $partial) {
-            if ($this->isNew() && null === $this->collTags) {
-                return 0;
-            }
-
-            if ($partial && !$criteria) {
-                return count($this->getTags());
-            }
-            $query = TagQuery::create(null, $criteria);
-            if ($distinct) {
-                $query->distinct();
-            }
-
-            return $query
-                ->filterByTask($this)
-                ->count($con);
+        if ($this->aTask === null && ($this->task_id !== null) && $doQuery) {
+            $this->aTask = TaskQuery::create()->findPk($this->task_id, $con);
+            /* The following can be used additionally to
+                guarantee the related object contains a reference
+                to this object.  This level of coupling may, however, be
+                undesirable since it could result in an only partially populated collection
+                in the referenced object.
+                $this->aTask->addTags($this);
+             */
         }
 
-        return count($this->collTags);
-    }
-
-    /**
-     * Method called to associate a Tag object to this object
-     * through the Tag foreign key attribute.
-     *
-     * @param    Tag $l Tag
-     * @return Task The current object (for fluent API support)
-     */
-    public function addTag(Tag $l)
-    {
-        if ($this->collTags === null) {
-            $this->initTags();
-            $this->collTagsPartial = true;
-        }
-
-        if (!in_array($l, $this->collTags->getArrayCopy(), true)) { // only add it if the **same** object is not already associated
-            $this->doAddTag($l);
-
-            if ($this->tagsScheduledForDeletion and $this->tagsScheduledForDeletion->contains($l)) {
-                $this->tagsScheduledForDeletion->remove($this->tagsScheduledForDeletion->search($l));
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param	Tag $tag The tag object to add.
-     */
-    protected function doAddTag($tag)
-    {
-        $this->collTags[]= $tag;
-        $tag->setTask($this);
-    }
-
-    /**
-     * @param	Tag $tag The tag object to remove.
-     * @return Task The current object (for fluent API support)
-     */
-    public function removeTag($tag)
-    {
-        if ($this->getTags()->contains($tag)) {
-            $this->collTags->remove($this->collTags->search($tag));
-            if (null === $this->tagsScheduledForDeletion) {
-                $this->tagsScheduledForDeletion = clone $this->collTags;
-                $this->tagsScheduledForDeletion->clear();
-            }
-            $this->tagsScheduledForDeletion[]= $tag;
-            $tag->setTask(null);
-        }
-
-        return $this;
+        return $this->aTask;
     }
 
     /**
@@ -1089,7 +944,8 @@ abstract class BaseTask extends BaseObject implements Persistent
     public function clear()
     {
         $this->id = null;
-        $this->description = null;
+        $this->tags = null;
+        $this->task_id = null;
         $this->alreadyInSave = false;
         $this->alreadyInValidation = false;
         $this->alreadyInClearAllReferencesDeep = false;
@@ -1112,19 +968,14 @@ abstract class BaseTask extends BaseObject implements Persistent
     {
         if ($deep && !$this->alreadyInClearAllReferencesDeep) {
             $this->alreadyInClearAllReferencesDeep = true;
-            if ($this->collTags) {
-                foreach ($this->collTags as $o) {
-                    $o->clearAllReferences($deep);
-                }
+            if ($this->aTask instanceof Persistent) {
+              $this->aTask->clearAllReferences($deep);
             }
 
             $this->alreadyInClearAllReferencesDeep = false;
         } // if ($deep)
 
-        if ($this->collTags instanceof PropelCollection) {
-            $this->collTags->clearIterator();
-        }
-        $this->collTags = null;
+        $this->aTask = null;
     }
 
     /**
@@ -1134,7 +985,7 @@ abstract class BaseTask extends BaseObject implements Persistent
      */
     public function __toString()
     {
-        return (string) $this->exportTo(TaskPeer::DEFAULT_STRING_FORMAT);
+        return (string) $this->exportTo(TagPeer::DEFAULT_STRING_FORMAT);
     }
 
     /**

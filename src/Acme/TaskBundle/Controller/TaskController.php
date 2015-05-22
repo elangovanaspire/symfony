@@ -1,4 +1,5 @@
 <?php
+// src/Acme/TaskBundle/Controller/TaskController.php
 namespace Acme\TaskBundle\Controller;
 
 use Acme\TaskBundle\Entity\Task;
@@ -12,7 +13,7 @@ class TaskController extends Controller
     public function newAction(Request $request)
     {
         $task = new Task();
-
+     
         // dummy code - this is here just so that the Task has some tags
         // otherwise, this isn't an interesting example
         $tag1 = new Tag();
@@ -22,16 +23,17 @@ class TaskController extends Controller
         $tag2->name = 'tag2';
         $task->getTags()->add($tag2);
         // end dummy code
-
+print_r($task); exit; 
         $form = $this->createForm(new TaskType(), $task);
 
         $form->handleRequest($request);
-
+   
         if ($form->isValid()) {
-            // ... maybe do some form processing, like saving the Task and Tag objects
-              $task->save();
+              
+            //$task->save();
+            
         }
-
+        
         return $this->render('AcmeTaskBundle:Task:new.html.twig', array(
             'form' => $form->createView(),
         ));

@@ -77,6 +77,21 @@ CREATE TABLE `book_x_list`
 ) ENGINE=MyISAM COMMENT='Cross-reference table for many-to-many relationship between book rows and book_club_list rows.';
 
 -- ---------------------------------------------------------------------
+-- tag
+-- ---------------------------------------------------------------------
+
+DROP TABLE IF EXISTS `tag`;
+
+CREATE TABLE `tag`
+(
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `tags` VARCHAR(20),
+    `task_id` INTEGER,
+    PRIMARY KEY (`id`),
+    INDEX `tag_FI_1` (`task_id`)
+) ENGINE=MyISAM;
+
+-- ---------------------------------------------------------------------
 -- task
 -- ---------------------------------------------------------------------
 
@@ -86,7 +101,6 @@ CREATE TABLE `task`
 (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `description` VARCHAR(100),
-    `tags` VARCHAR(20),
     PRIMARY KEY (`id`)
 ) ENGINE=MyISAM;
 

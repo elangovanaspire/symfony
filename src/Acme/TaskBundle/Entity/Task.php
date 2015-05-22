@@ -1,7 +1,9 @@
 <?php
+// src/Acme/TaskBundle/Entity/Task.php
 namespace Acme\TaskBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
+
 
 class Task
 {
@@ -28,4 +30,6 @@ class Task
     {
         return $this->tags;
     }
+    
+    
 }

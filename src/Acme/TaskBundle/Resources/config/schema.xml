@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <database name="default" namespace="Acme\TaskBundle\Model" defaultIdMethod="native">
+    <table name="tag">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true" />
+         <column name="tags" type="varchar" size="20" />
+        <column name="task_id" type="integer" />
+        <foreign-key foreignTable="task">
+            <reference local="task_id" foreign="id" />
+        </foreign-key>
+    </table>
     <table name="task">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true" />
-        <column name="description" type="varchar" primaryString="1" size="100" />
-        <column name="tags" type="varchar" size="20" />      
-    </table>    
+        <column name="description" type="varchar" size="100" />
+    </table>
 </database>

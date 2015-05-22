@@ -7,7 +7,7 @@ use \TableMap;
 
 
 /**
- * This class defines the structure of the 'task' table.
+ * This class defines the structure of the 'tag' table.
  *
  *
  *
@@ -18,13 +18,13 @@ use \TableMap;
  *
  * @package    propel.generator.src.Acme.TaskBundle.Model.map
  */
-class TaskTableMap extends TableMap
+class TagTableMap extends TableMap
 {
 
     /**
      * The (dot-path) name of this class
      */
-    const CLASS_NAME = 'src.Acme.TaskBundle.Model.map.TaskTableMap';
+    const CLASS_NAME = 'src.Acme.TaskBundle.Model.map.TagTableMap';
 
     /**
      * Initialize the table attributes, columns and validators
@@ -36,14 +36,15 @@ class TaskTableMap extends TableMap
     public function initialize()
     {
         // attributes
-        $this->setName('task');
-        $this->setPhpName('Task');
-        $this->setClassname('Acme\\TaskBundle\\Model\\Task');
+        $this->setName('tag');
+        $this->setPhpName('Tag');
+        $this->setClassname('Acme\\TaskBundle\\Model\\Tag');
         $this->setPackage('src.Acme.TaskBundle.Model');
         $this->setUseIdGenerator(true);
         // columns
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, null, null);
-        $this->addColumn('description', 'Description', 'VARCHAR', false, 100, null);
+        $this->addColumn('tags', 'Tags', 'VARCHAR', false, 20, null);
+        $this->addForeignKey('task_id', 'TaskId', 'INTEGER', 'task', 'id', false, null, null);
         // validators
     } // initialize()
 
@@ -52,7 +53,7 @@ class TaskTableMap extends TableMap
      */
     public function buildRelations()
     {
-        $this->addRelation('Tag', 'Acme\\TaskBundle\\Model\\Tag', RelationMap::ONE_TO_MANY, array('id' => 'task_id', ), null, null, 'Tags');
+        $this->addRelation('Task', 'Acme\\TaskBundle\\Model\\Task', RelationMap::MANY_TO_ONE, array('task_id' => 'id', ), null, null);
     } // buildRelations()
 
-} // TaskTableMap
+} // TagTableMap

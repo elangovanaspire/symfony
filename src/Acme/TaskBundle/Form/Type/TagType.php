@@ -1,5 +1,5 @@
 <?php
-
+// src/Acme/TaskBundle/Form/Type/TagType.php
 namespace Acme\TaskBundle\Form\Type;
 
 use Symfony\Component\Form\AbstractType;
@@ -25,4 +25,3 @@ class TagType extends AbstractType
         return 'tag';
     }
 }
-
